@@ -12,12 +12,16 @@ This is infra-home Sprint 2, independent of HeatMesh sprint numbering. Build on 
 
 - [ ] Inventory current router/firewall, WAN/LAN addressing, routes, DHCP/DNS providers and service ingress; identify recovery access before making changes.
 - [ ] Choose the VyOS placement, interfaces, management network and any VLAN/subnet segmentation; document a topology and address plan.
+- [ ] Confirm each infra-owned system's host and ownership boundary: which services run on `iot-home`, which are on their own machines, and which are not yet assigned.
+- [ ] Map internal and external names for each service; record actual hostnames, internal addresses and any deliberately public names under `keithmarston.me.uk` without overcommitting to a whole-zone split-horizon design.
+- [ ] Decide which service ports are LAN-only, host-local, or intentionally exposed through the network boundary; default to private-only access unless a service has an explicit reason to be reachable beyond the local network.
 - [ ] Define firewall zones/rules and required routes/NAT. Default-deny unsolicited inbound access; permit only documented service and management flows.
 - [ ] Define what “entry point” means for this estate: private/VPN access versus deliberately public services, and any reverse proxy/TLS termination needed. VyOS is the network boundary, not automatically an HTTP reverse proxy.
 - [ ] Design split-horizon resolution for `keithmarston.me.uk`: selected service names resolve to internal destinations for internal clients, with deliberate public answers for external clients.
 - [ ] Select the internal DNS service, authoritative/override mechanism, upstream resolvers and client delivery through DHCP or explicit settings. Preserve resolution of names not hosted internally.
 - [ ] Inventory existing public DNS records before changes; preserve required mail-related records and avoid accidentally shadowing the whole public zone with incomplete internal records.
 - [ ] Agree names, destinations and access policy for each infra-owned system; do not publish sensitive administration endpoints just to provide a hostname.
+- [ ] Ensure runtime configuration, credentials and generated state remain with the owning system and are not mixed into a single repo root; each host stack remains in its own deployment folder.
 - [ ] Implement and test the firewall/DNS setup with configuration backups, a controlled cutover and a working rollback procedure.
 - [ ] Verify routing, internal/external DNS answers, permitted/blocked access and continued operation of the Sprint 1 stack.
 
