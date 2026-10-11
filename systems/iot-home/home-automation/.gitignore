@@ -1,0 +1,14 @@
+# Local runtime secrets
+.env
+config/mosquitto/passwordfile
+config/mosquitto/aclfile
+
+# Generated state and broker data
+config/mosquitto/data/*
+config/mosquitto/log/*
+config/zigbee2mqtt/*.db
+config/zigbee2mqtt/*.log
+
+# Keep directory structure tracked
+!config/mosquitto/data/.gitkeep
+!config/mosquitto/log/.gitkeep

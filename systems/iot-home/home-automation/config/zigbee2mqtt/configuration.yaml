@@ -1,0 +1,15 @@
+homeassistant: true
+mqtt:
+  base_topic: zigbee2mqtt
+  server: mqtt://mosquitto:1883
+  user: zigbee2mqtt
+  password: replace-with-secure-password
+frontend:
+  enabled: true
+  port: 8080
+serial:
+  port: tcp://192.168.0.50:6638
+advanced:
+  cache_state: true
+experimental:
+  new_state_topics: false

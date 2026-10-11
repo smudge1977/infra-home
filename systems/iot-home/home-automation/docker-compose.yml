@@ -1,0 +1,63 @@
+name: home-automation-stack
+
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: homeassistant
+    restart: unless-stopped
+    network_mode: host
+    privileged: true
+    environment:
+      TZ: ${TZ:-Europe/London}
+    volumes:
+      - /opt/homeassistant/config:/config
+      - /etc/localtime:/etc/localtime:ro
+
+  esphome:
+    image: ghcr.io/esphome/esphome:stable
+    container_name: esphome
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      TZ: ${TZ:-Europe/London}
+      ESPHOME_USERNAME: ${ESPHOME_USERNAME:-admin}
+      ESPHOME_PASSWORD: ${ESPHOME_PASSWORD:-change-me}
+    volumes:
+      - /opt/esphome/config:/config
+      - /etc/localtime:/etc/localtime:ro
+
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: mosquitto
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:1883:1883"
+    volumes:
+      - ./config/mosquitto:/mosquitto/config:ro
+      - ./config/mosquitto/data:/mosquitto/data
+      - ./config/mosquitto/log:/mosquitto/log
+    networks:
+      - automation
+
+  zigbee2mqtt:
+    image: koenkk/zigbee2mqtt:1.41.0
+    container_name: zigbee2mqtt
+    restart: unless-stopped
+    depends_on:
+      - mosquitto
+    environment:
+      TZ: ${TZ:-Europe/London}
+    volumes:
+      - ./config/zigbee2mqtt:/app/data
+      - /run/udev:/run/udev:ro
+    ports:
+      - "127.0.0.1:8080:8080"
+    networks:
+      - automation
+
+networks:
+  automation:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24

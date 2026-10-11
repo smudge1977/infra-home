@@ -1,0 +1,9 @@
+# Example ACLs for the MQTT broker.
+# Generate a real ACL file by copying this template, then keep the produced file
+# outside Git.
+
+user homeassistant
+pattern readwrite homeassistant/#
+
+user zigbee2mqtt
+pattern readwrite zigbee2mqtt/#

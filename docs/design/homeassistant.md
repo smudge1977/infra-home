@@ -1,3 +1,10 @@
+# Home Assistant and associated services
+
+## Delivery plan
+
+[infra-home Sprint 1](../sprint-1.md) owns consolidation of the existing manual Home Assistant and ESPHome deployments into **one Docker Compose project**, adding Mosquitto and Zigbee2MQTT. This supplies the infrastructure portion of HeatMesh Sprint 3; the two repositories have independent sprint numbering.
+
+The stack design and migration boundary are recorded in [Home automation stack](home-automation-stack.md). [infra-home Sprint 2](../sprint-2.md) covers VyOS as firewall/network entry point and split-horizon DNS for `keithmarston.me.uk`.
 
 Separate **configuration you maintain in Git** from **the running Home Assistant installation you back up**. You need both: Git is not a full HA backup.
 
@@ -90,6 +97,6 @@ A useful division is:
 - **Zigbee2MQTT:** device communication—not the heating policy.
 - **Hardware:** physical interlocks and safe failure behaviour; software must not be their substitute.
 
-For Sprint 1, keep the output boundary virtual, as described in README.md.
+For HeatMesh Sprint 1 and Sprint 3, keep the heating output boundary virtual. Infrastructure delivery must not connect those virtual outputs to physical heating relays.
 
 **Practical recommendation:** Git-managed packages for heating, UI-managed configuration for experimentation, and scheduled off-host backups for the complete installation.
