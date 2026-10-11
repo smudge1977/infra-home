@@ -33,3 +33,23 @@ the serial configuration and Compose device mapping when replacing it with the
 PoE coordinator. The broker ACL should allow Home Assistant to read/write
 `homeassistant/#` and `zigbee2mqtt/#`, and Zigbee2MQTT to read/write
 `zigbee2mqtt/#` and publish discovery messages under `homeassistant/#`.
+
+## Home Assistant MQTT and Zigbee administration
+
+- MQTT is configured through **Settings → Devices & services → MQTT**, using
+	broker `127.0.0.1`, port `1883`, protocol MQTT 5 and account `homeassistant`.
+	Set its password to the corresponding local broker credential; do not store
+	credentials in this documentation. HA uses host networking, so the loopback
+	broker endpoint is accessible without publishing MQTT to the LAN.
+- Zigbee2MQTT publishes Home Assistant discovery messages. The bridge connection
+	entity is `binary_sensor.zigbee2mqtt_bridge_connection_state`.
+- An admin-only **Zigbee2MQTT** sidebar dashboard at `/zigbee-admin/web` embeds
+	`http://192.168.0.114:8080/`. Its non-secret reference configuration is in
+	[zigbee2mqtt-dashboard.yaml](zigbee2mqtt-dashboard.yaml).
+- The web UI binds only to `192.168.0.114`, not every host interface. It currently
+	has no separate frontend authentication: the HA dashboard's admin restriction
+	does not protect direct access to port 8080. Treat it as trusted-LAN access
+	only; do not forward it from the WAN. Frontend authentication or a protected
+	reverse proxy is required before extending access beyond the trusted LAN.
+- The iframe uses HTTP to match the current LAN HA URL. Accessing HA over HTTPS
+	requires an HTTPS frontend/proxy URL to avoid mixed-content blocking.

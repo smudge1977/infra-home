@@ -1,0 +1,11 @@
+# Reference configuration for the HA storage dashboard at /zigbee-admin.
+# Create an admin-only sidebar dashboard, then paste this into its raw editor.
+title: Zigbee2MQTT
+views:
+  - title: Zigbee2MQTT
+    path: web
+    panel: true
+    cards:
+      - type: iframe
+        url: http://192.168.0.114:8080/
+        aspect_ratio: 100%
