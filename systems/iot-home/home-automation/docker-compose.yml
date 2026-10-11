@@ -33,7 +33,7 @@ services:
     ports:
       - "127.0.0.1:1883:1883"
     volumes:
-      - ./config/mosquitto:/mosquitto/config:ro
+      - ./config/mosquitto:/mosquitto/config
       - ./config/mosquitto/data:/mosquitto/data
       - ./config/mosquitto/log:/mosquitto/log
     networks:
@@ -47,6 +47,8 @@ services:
       - mosquitto
     environment:
       TZ: ${TZ:-Europe/London}
+    devices:
+      - /dev/ttyACM0:/dev/ttyACM0
     volumes:
       - ./config/zigbee2mqtt:/app/data
       - /run/udev:/run/udev:ro

@@ -6,6 +6,8 @@ Deployment, networking and operational recovery for the home infrastructure esta
 
 | System | Scope |
 |---|---|
+| [prox04](systems/prox04/README.md) | Proxmox virtualization host — HPE DL380, 256 GB RAM |
+| [prox01](systems/prox01/README.md) | Proxmox virtualization host — consumer NUC-type machine, 32 GB RAM; Proxmox Backup Server installed, exploration planned |
 | Forgejo, runners and registry | Git hosting, CI execution and package/container publishing |
 | Home Assistant and associated services | Home Assistant, ESPHome, Mosquitto and Zigbee2MQTT deployment and recovery |
 | VyOS | Firewall, routing and network entry point |
@@ -20,6 +22,7 @@ This is the team's ownership inventory, not a claim that every system is already
 
 The repo is structured by ownership and host, not by one monolithic stack:
 
+- [prox04](systems/prox04/README.md) and [prox01](systems/prox01/README.md) document the Proxmox hosts and planned exploration of the backup service on prox01.
 - `systems/iot-home/home-automation/` contains the live Home Assistant stack for `iot-home`.
 - `systems/.../` folders are reserved for other infra-owned systems such as Forgejo, Zabbix, MeshCentral and service hosts.
 - Each deployment folder owns its own Compose file, local config and secret handling.

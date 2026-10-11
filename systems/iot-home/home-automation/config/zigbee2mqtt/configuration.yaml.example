@@ -8,8 +8,14 @@ frontend:
   enabled: true
   port: 8080
 serial:
-  port: tcp://192.168.0.50:6638
+  # Temporary USB coordinator; replace when the PoE coordinator arrives.
+  port: /dev/ttyACM0
 advanced:
   cache_state: true
+  homeassistant_legacy_entity_attributes: false
+  legacy_api: false
+  legacy_availability_payload: false
 experimental:
   new_state_topics: false
+device_options:
+  legacy: false
