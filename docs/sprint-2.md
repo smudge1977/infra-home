@@ -41,18 +41,18 @@ This is infra-home Sprint 2, independent of HeatMesh sprint numbering. Build on 
 
 This is a provisional inventory to be confirmed in the live estate. Values are intentionally explicit about network posture while leaving final hostnames and public records to the design review.
 
-| System | Host | Internal name / address | Public name under `keithmarston.me.uk` | Service ports | Access class |
-|---|---|---|---|---|---|
-| Home Assistant | `iot-home` | `homeassistant` on private LAN; MQTT broker on `iot-home` local/private endpoint | None by default | `8123` HA UI, `1883` MQTT broker, `6052` ESPHome admin, `8080` Zigbee2MQTT admin | LAN-only or host-local by default |
-| ESPHome dashboard | `iot-home` | `esphome` on LAN/private endpoint | None by default | `6052` | LAN-only |
-| Mosquitto broker | `iot-home` | `mqtt` or `mosquitto` on private network; host-local loopback if possible | None | `1883` internal only | LAN-only / host-local |
-| Zigbee2MQTT | `iot-home` | `zigbee2mqtt` on private network, coordinator via LAN TCP endpoint | None | `8080` frontend, coordinator TCP port to Dongle-M | LAN-only |
-| Forgejo, runners and registry | TBD | `forgejo`, `runner-*`, registry service names on internal network | Optional public hostname only if approved | `22`, `443`, `80`, registry ports | Internal-first, public only with explicit approval |
-| Zabbix | TBD | `zabbix`, `zabbix-web`, agents on internal network | Optional public hostname only if approved | Web UI, agent ports, monitoring ports | Internal-first, admin UI restricted |
-| MeshCentral | TBD | `meshcentral` on internal management network | Optional public hostname only if approved | Web UI, remote-agent ports | Internal-first, management only |
-| massage-brighton | TBD | Internal service hostname or ingress target, to be confirmed | Optional public hostname only if approved | Service-specific | Confirm hosting and audience |
-| maillist.cloud | TBD | Internal mail/application host, to be confirmed | Existing public mail names preserved | Mail/service ports | Preserve existing public DNS and mail flow |
-| VyOS | Firewall / router host | Management network interface and recovery address only | None for admin endpoints by default | SSH/management, firewall ports | Restricted management only |
+| System | Host | Internal DNS / address | Public DNS name | Ports | Exposure | Owner | Status |
+|---|---|---|---|---|---|---|---|
+| Home Assistant | `iot-home` | `homeassistant` on private LAN; MQTT broker on local/private endpoint | None by default | `8123` UI, `1883` MQTT, `6052` ESPHome, `8080` Zigbee2MQTT | LAN-only or host-local by default | infra-home | Confirmed host, pending exact names |
+| ESPHome dashboard | `iot-home` | `esphome` on LAN/private endpoint | None by default | `6052` | LAN-only | infra-home | Confirmed host, pending exact names |
+| Mosquitto broker | `iot-home` | `mqtt` or `mosquitto` on private network; host-local loopback if possible | None | `1883` internal only | LAN-only / host-local | infra-home | Confirmed host, pending exact endpoint |
+| Zigbee2MQTT | `iot-home` | `zigbee2mqtt` on private network | None | `8080` UI + coordinator TCP port | LAN-only | infra-home | Confirmed host, pending exact port and endpoint |
+| Forgejo, runners and registry | To be assigned | `forgejo`, `runner-*`, registry service names on internal network | Optional public hostname only if approved | `22`, `443`, `80`, registry ports | Internal-first; public only with explicit approval | infra-home | Pending host and ingress decision |
+| Zabbix | To be assigned | `zabbix`, `zabbix-web`, agent endpoints on internal network | Optional public hostname only if approved | Web UI, agent ports, monitoring ports | Internal-first, admin UI restricted | infra-home | Pending host and access review |
+| MeshCentral | To be assigned | `meshcentral` on internal management network | Optional public hostname only if approved | Web UI, managed-device ports | Internal-first, management only | infra-home | Pending host and access review |
+| massage-brighton | To be assigned | Service hostname or ingress target, to be confirmed | Optional public hostname only if approved | Service-specific | Confirm hosting and audience | infra-home | Pending ownership details |
+| maillist.cloud | To be assigned | Internal mail/application host, to be confirmed | Existing public mail names preserved | Mail/service ports | Preserve existing public DNS and mail flow | infra-home | Pending public record review |
+| VyOS | Firewall/router host | Management network interface and recovery address only | None for admin endpoints by default | SSH/management and firewall ports | Restricted management only | infra-home | Pending topology and recovery path |
 
 The exact names and any public records should be confirmed against the live network, but the governing rule remains the same: internal systems are internal by default, public exposure is deliberate, and no admin UI or broker should be made WAN-facing without an explicit security decision.
 
