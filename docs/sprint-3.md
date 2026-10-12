@@ -55,6 +55,15 @@ Read-only inspection of the authenticated Home Assistant frontend confirmed:
 
 These are discovery findings, not completed acceptance criteria. Account setup, extra plug assignments and appliance safety checks remain prerequisites for a trustworthy whole-home comparison.
 
+### HACS installation — 2026-10-12
+
+- Installed HACS **2.0.5** using the official installer inside the `homeassistant` Docker container. Home Assistant **2026.7.4** meets the installer's minimum version of **2024.4.1**.
+- Before installation, stopped Home Assistant and copied the complete configuration into a timestamped `pre-hacs` backup under the host user's private backup directory outside Git. This local backup includes sensitive installation state and must not be published; it is not an off-host recovery copy.
+- Home Assistant configuration validation passed before and after installation. Restarted Home Assistant to discover the custom integration.
+- Final UI setup and GitHub device authorization remain pending. Authorize directly in the browser; do not put GitHub tokens or authorization codes in this document or chat.
+- No Octopus account configuration or plug switching was performed. Once HACS setup is complete, install the Octopus integration and enter Octopus credentials privately in Home Assistant.
+- Rollback: remove the HACS integration through the UI if configured, remove only its installed component directory, and restart Home Assistant. If wider recovery is needed, stop Home Assistant before restoring the protected pre-installation configuration backup.
+
 ## Plug inventory to complete during implementation
 
 The following entities and generic model names were confirmed from Home Assistant. Friendly names are not proof of the attached appliance; confirm assignments, exact hardware ratings and measurement start dates before inclusion.
