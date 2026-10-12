@@ -33,13 +33,37 @@ The initial reconciliation should default to the **latest complete day available
 - [ ] **Document deployment and recovery.** Store reusable dashboard/package YAML and a non-secret entity mapping with this repository's home automation stack. Document integration prerequisites, configuration validation, installation/reload steps and rollback. Keep account details, API keys, meter identifiers and private consumption exports out of Git.
 - [ ] **Observe and reconcile real days.** Collect at least three complete matched days after the initial plug set is installed. Check totals against the source readings and investigate negative remainders, missing days or unexpected changes. Record baseline coverage and choose the next measurement points from the remaining gap.
 
+## Initial discovery — 2026-10-12
+
+Read-only inspection of the authenticated Home Assistant frontend confirmed:
+
+- Home Assistant's time zone is `Europe/London`.
+- Three Tuya smart sockets have enabled power and cumulative-energy entities. Their energy sensors report kWh with `device_class: energy` and `state_class: total_increasing`; power sensors use W and `state_class: measurement`.
+- The office heater plug is reporting. The washing-machine plug and the plug labelled **DO NOT TURN OFF!** are currently unavailable. Availability alone does not establish the cause; inspect device connectivity before drawing conclusions about consumption.
+- No Octopus integration is configured, and no HACS integration is configured. This does not prove whether custom component files exist on disk.
+- The Home Assistant Energy preferences API returned `not_found`: no saved native Energy dashboard configuration was found.
+- No matching plug daily-meter entities were found in the current states. Historical coverage, counter reset behaviour and installation dates still need checking.
+- No switching, integration installation, restart or dashboard configuration changes were made during discovery. The **DO NOT TURN OFF!** device must remain untouched until its load is identified.
+
+### First implementation steps and blockers
+
+1. Install the [BottlecapDave Octopus Energy integration](https://bottlecapdave.github.io/HomeAssistant-OctopusEnergy/) using a supported release, via HACS if deliberately added or via its documented manual installation. Review compatibility, take a configuration backup and plan the required Home Assistant restart first.
+2. Complete [Octopus account setup](https://bottlecapdave.github.io/HomeAssistant-OctopusEnergy/setup/account/) directly in Home Assistant. The user must enter account credentials/API key privately in the UI, not in chat or repository files. Meter access, Home Mini availability and any solar/battery/export arrangement are not yet confirmed.
+3. For delayed supplier consumption, use the integration's **external statistics** for the native Energy dashboard, not the ordinary previous-consumption sensor. The [integration's Energy guide](https://bottlecapdave.github.io/HomeAssistant-OctopusEnergy/setup/energy_dashboard/) explains that ordinary sensor updates otherwise assign consumption to the retrieval day; external statistics retain the consumption timestamps and may take up to 24 hours to appear.
+4. Investigate the two unavailable Tuya plugs without toggling their outlets; identify the protected load, confirm safe appliance ratings, and inventory the additional physical plugs with the user.
+5. Check existing long-term statistics for the three cumulative kWh sensors, then introduce daily totals and the explicit non-overlapping plug set. Do not claim completed-day accounting until matching supplier data and complete plug observation periods are available.
+
+These are discovery findings, not completed acceptance criteria. Account setup, extra plug assignments and appliance safety checks remain prerequisites for a trustworthy whole-home comparison.
+
 ## Plug inventory to complete during implementation
 
-Do not assume existing entity IDs or appliance assignments. Add one row for every existing or spare plug once confirmed.
+The following entities and generic model names were confirmed from Home Assistant. Friendly names are not proof of the attached appliance; confirm assignments, exact hardware ratings and measurement start dates before inclusion.
 
 | Plug / friendly name | Appliance / location | Model / integration | Power entity | Energy entity | Measurement start | Included in total? | Status / gaps |
 |---|---|---|---|---|---|---|---|
-| To inventory | Existing monitored loads | To confirm | To confirm | To confirm | To confirm | Pending checks | Not yet inventoried |
+| Washing Machine | Washing machine, per friendly name; location to confirm | Tuya Smart Socket / Tuya | `sensor.washing_machine_power` | `sensor.washing_machine_total_energy` | To confirm | Pending checks | Unavailable during discovery |
+| DO NOT TURN OFF! | Protected load; appliance/location unknown | Tuya Smart Socket / Tuya | `sensor.do_not_turn_off_power` | `sensor.do_not_turn_off_total_energy` | To confirm | Pending checks | Unavailable; do not toggle outlet |
+| Office heater power plug | Office heater, per friendly name; rating to confirm | Tuya Smart Socket / Tuya | `sensor.office_desk_power` | `sensor.office_desk_total_energy` | To confirm | Pending checks | Reporting; entity IDs retain old office-desk name |
 | To inventory | Additional plugs / unassigned loads | To confirm | To confirm | To confirm | Not installed | No, until verified | Ready to plan |
 
 ## Accounting rules and limitations
