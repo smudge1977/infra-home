@@ -34,6 +34,24 @@ PoE coordinator. The broker ACL should allow Home Assistant to read/write
 `homeassistant/#` and `zigbee2mqtt/#`, and Zigbee2MQTT to read/write
 `zigbee2mqtt/#` and publish discovery messages under `homeassistant/#`.
 
+## Home Assistant ESPHome dashboard
+
+- An admin-only **ESPHome** sidebar dashboard at `/esphome-admin/web` embeds
+	`http://192.168.0.114:6052/`. ESPHome remains a separate Docker service, not
+	a Home Assistant add-on.
+- Install [esphome-dashboard.yaml](esphome-dashboard.yaml) as
+	`/opt/homeassistant/config/esphome-dashboard.yaml` and
+	[esphome-dashboard-package.yaml](esphome-dashboard-package.yaml) as
+	`/opt/homeassistant/config/packages/esphome_dashboard.yaml`. The existing
+	`homeassistant.packages` directory include loads the registration and keeps
+	existing storage dashboards intact. Validate HA configuration and restart HA
+	after installing the package.
+- ESPHome's own login still applies inside the iframe. The HA admin restriction
+	protects the sidebar dashboard, not direct access to port 6052. Keep the service
+	on the trusted LAN and do not expose it to the WAN.
+- The embedded HTTP URL matches the current LAN HA URL; HTTPS access to HA
+	requires an HTTPS ESPHome proxy URL to avoid mixed-content blocking.
+
 ## Home Assistant MQTT and Zigbee administration
 
 - MQTT is configured through **Settings → Devices & services → MQTT**, using

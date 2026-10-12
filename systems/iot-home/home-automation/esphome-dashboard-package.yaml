@@ -1,0 +1,12 @@
+# Install at /config/packages/esphome_dashboard.yaml.
+# Requires homeassistant.packages: !include_dir_named packages.
+lovelace:
+  mode: storage
+  dashboards:
+    esphome-admin:
+      mode: yaml
+      title: ESPHome
+      icon: mdi:chip
+      show_in_sidebar: true
+      require_admin: true
+      filename: esphome-dashboard.yaml

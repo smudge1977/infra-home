@@ -60,17 +60,19 @@ Current temporary operating note: a USB Zigbee coordinator is being used in pass
 
 ## Work items
 
+Outstanding work is tracked in Forgejo with the **sprint 1** label. Each issue links back to this plan; close it only when its completion evidence is accepted.
+
 - [x] Inspect the existing Compose definitions, persistent configuration paths and running services.
 - [x] Record the [target stack and migration design](design/home-automation-stack.md).
-- [ ] Inventory integrations, discovery requirements, device access and backup coverage; record outstanding coordinator settings without exposing secrets.
+- [ ] Inventory integrations, discovery requirements, device access and backup coverage; record outstanding coordinator settings without exposing secrets. [Issue #1](https://git.keithmarston.me.uk/keith/infra-home/issues/1)
 - [x] Add the unified Compose definition and non-secret service configuration to infra-home, with protected local secrets and documented runtime paths.
-- [ ] Retain existing HA/ESPHome data paths for the initial cutover; review HA privilege requirements and replace/rotate inline ESPHome dashboard credentials.
+- [ ] Retain existing HA/ESPHome data paths for the initial cutover; review HA privilege requirements and replace/rotate inline ESPHome dashboard credentials. [Issue #2](https://git.keithmarston.me.uk/keith/infra-home/issues/2)
 - [x] Configure authenticated Mosquitto, service accounts/topic permissions, persistence and a broker endpoint usable by host-network HA.
 - [x] Configure Zigbee2MQTT, HA discovery and the verified SONOFF Dongle-M network coordinator connection.
-- [ ] Define readiness checks, restart/reconnection behavior, version/update policy and administration access restrictions.
-- [ ] Back up, perform a controlled cutover, and validate rollback without duplicate writers against configuration directories.
-- [ ] Test consistent encrypted off-host backups and restoration for all four services.
-- [ ] Record acceptance evidence and hand the working transport/integration layer to HeatMesh.
+- [ ] Define readiness checks, restart/reconnection behavior, version/update policy and administration access restrictions. [Issue #3](https://git.keithmarston.me.uk/keith/infra-home/issues/3)
+- [ ] Back up, perform a controlled cutover, and validate rollback without duplicate writers against configuration directories. [Issue #4](https://git.keithmarston.me.uk/keith/infra-home/issues/4)
+- [ ] Test consistent encrypted off-host backups and restoration for all four services. [Issue #5](https://git.keithmarston.me.uk/keith/infra-home/issues/5)
+- [ ] Record acceptance evidence and hand the working transport/integration layer to HeatMesh. [Issue #6](https://git.keithmarston.me.uk/keith/infra-home/issues/6)
 
 ## Acceptance criteria
 

@@ -42,6 +42,8 @@ The existing live runtime paths under `/opt/homeassistant` and `/opt/esphome` ar
 
 Sprint numbering is local to this repository. HeatMesh owns heating behavior and device firmware; infra-home owns how the supporting services run, are secured and recover.
 
+Future, unscheduled operational work is tracked in the [infrastructure backlog](docs/backlog.md) and Forgejo issues labeled **backlog**.
+
 ## Design notes
 
 - [Home automation stack and migration](docs/design/home-automation-stack.md)
