@@ -1,7 +1,15 @@
 # Infrastructure backlog
 
 Unscheduled work owned by infra-home. Forgejo issues carry the **backlog** label;
-these items are not added to Sprint 1 or Sprint 2 until explicitly planned.
+these items are not added to a sprint until explicitly planned.
+
+## Planned energy monitoring work
+
+Octopus daily electricity consumption, per-plug daily kWh, unaccounted usage and
+additional monitoring plugs are planned in
+[Sprint 3 — Electricity dashboard and smart-plug coverage](sprint-3.md), rather
+than left as unscheduled backlog work. Heating/controller-specific use of energy
+data remains separate from this infrastructure dashboard.
 
 ## Backup and recovery
 

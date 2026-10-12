@@ -39,6 +39,7 @@ The existing live runtime paths under `/opt/homeassistant` and `/opt/esphome` ar
 
 1. [Sprint 1 — Home automation service stack](docs/sprint-1.md): consolidate the existing manual HA and ESPHome Compose deployments into one project, adding Mosquitto and Zigbee2MQTT. This is the infrastructure dependency for the first part of **HeatMesh Sprint 3**.
 2. [Sprint 2 — VyOS and split-horizon DNS](docs/sprint-2.md): establish the firewall/network entry point and internal DNS horizon for `keithmarston.me.uk`.
+3. [Sprint 3 — Electricity dashboard and smart-plug coverage](docs/sprint-3.md): compare Octopus daily electricity consumption with daily kWh per plug, show the unaccounted remainder and coverage percentage, and add more monitoring plugs incrementally.
 
 Sprint numbering is local to this repository. HeatMesh owns heating behavior and device firmware; infra-home owns how the supporting services run, are secured and recover.
 
