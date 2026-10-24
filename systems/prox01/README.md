@@ -7,6 +7,12 @@
 - Platform: Proxmox virtualization server.
 - Proxmox Backup Server is installed on this host; installation details and operational readiness remain to be inventoried.
 
+## Terraform trial — Ubuntu 26.04
+
+- Isolated [build/teardown trial](terraform/ubuntu-trial/README.md) for one disposable full clone.
+- Target: VM 4001, ZFS01 storage, vmbr0, DHCP; source template ID still to be supplied.
+- Review build and destruction plans separately. No existing VMs or host services are managed by this configuration.
+
 ## Planned exploration — Proxmox Backup Server
 
 - [ ] Explore the existing installation and record its version, deployment method and datastore configuration.
