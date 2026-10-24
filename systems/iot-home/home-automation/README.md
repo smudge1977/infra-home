@@ -61,13 +61,50 @@ PoE coordinator. The broker ACL should allow Home Assistant to read/write
 	broker endpoint is accessible without publishing MQTT to the LAN.
 - Zigbee2MQTT publishes Home Assistant discovery messages. The bridge connection
 	entity is `binary_sensor.zigbee2mqtt_bridge_connection_state`.
+
 - An admin-only **Zigbee2MQTT** sidebar dashboard at `/zigbee-admin/web` embeds
-	`http://192.168.0.114:8080/`. Its non-secret reference configuration is in
+	`https://z2m.keithmarston.me.uk/`. Its non-secret reference configuration is in
 	[zigbee2mqtt-dashboard.yaml](zigbee2mqtt-dashboard.yaml).
 - The web UI binds only to `192.168.0.114`, not every host interface. It currently
 	has no separate frontend authentication: the HA dashboard's admin restriction
-	does not protect direct access to port 8080. Treat it as trusted-LAN access
-	only; do not forward it from the WAN. Frontend authentication or a protected
-	reverse proxy is required before extending access beyond the trusted LAN.
-- The iframe uses HTTP to match the current LAN HA URL. Accessing HA over HTTPS
-	requires an HTTPS frontend/proxy URL to avoid mixed-content blocking.
+	does not protect direct access to port 8080 or its separate HTTPS proxy host.
+	The Nginx Proxy Manager host `z2m.keithmarston.me.uk` forwards to
+	`http://192.168.0.114:8080/`; TLS makes the iframe compatible with HTTPS HA,
+	but does not provide authentication. Apply an NPM Access List or enable
+	Zigbee2MQTT frontend authentication before allowing public access.
+
+## HTTPS through Nginx Proxy Manager
+
+The public HA endpoint is `https://ha.keithmarston.me.uk`, with TLS terminated
+by Nginx Proxy Manager and HA still served internally on port `8123`. On
+2026-10-17, HA logged the proxy's backend source as `10.100.100.7`; the live
+`/opt/homeassistant/config/configuration.yaml` therefore has this root-level
+HTTP configuration:
+
+```yaml
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 10.100.100.7
+```
+
+Trust only the address HA actually sees for NPM. Do not replace it with the
+whole LAN or Docker subnet; re-check HA's logs if NPM networking changes. The
+config was checked and HA restarted; the HTTPS endpoint then reached HA's login
+flow rather than returning `400 Bad Request`.
+
+## Home Assistant update assessment
+
+As of 2026-10-17, the running container is Home Assistant `2026.7.4`; the
+current October release is `2026.10.2`. An update is advisable, but was kept
+separate from this proxy fix. Before the maintenance window, back up the full
+HA configuration and UI-managed state, review the intervening release notes,
+and check HACS and the custom Octopus Energy integration for compatibility.
+Then update the HA image and verify HA, MQTT/Zigbee2MQTT, ESPHome, dashboards,
+and the heating automations. Keep a rollback image available. In particular,
+2026.10 includes some integration-specific breaking changes; check whether
+they apply to integrations actually in use.
+
+See the official [2026.8](https://www.home-assistant.io/blog/2026/08/05/release-20268/),
+[2026.9](https://www.home-assistant.io/blog/2026/09/02/release-20269/), and
+[2026.10 release notes](https://www.home-assistant.io/blog/2026/10/07/release-202610/).
