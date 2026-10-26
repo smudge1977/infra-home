@@ -30,6 +30,11 @@ Forgejo at git.keithmarston.me.uk is the place to store
 This will then move to keithmarston.me.uk been a PaaS provider spinning a customer environment on demand 
 
 
+| Environment | Host | VM IDs | Endpoint, datastore, bridge |
+| --- | --- | --- | --- |
+| `envs/dev` | `prox04` | 5000–5099 |  |
+| `envs/sandbox` | `prox04` | 4000–4099 | Required in `terraform.tfvars` |
+| `envs/prod` | `prox04` | 1000–1999 | Required in `terraform.tfvars` |
 
 Copy:
 
