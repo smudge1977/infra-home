@@ -1,17 +1,44 @@
-# Ubuntu 26.04 Terraform build/teardown trial
+# Sandbox environment — Ubuntu 26.04 build/teardown trial
 
-An isolated root configuration using the `bpg/proxmox` provider. It manages **one
-disposable VM**, not prox01 itself, its backup service, or existing guests.
-No infrastructure changes happen until an explicitly reviewed apply.
+The `sandbox` root configuration using the `bpg/proxmox` provider. It calls the
+shared [`modules/vm`](../../modules/vm) module for the VMs in `vms` (default: one
+disposable trial), not the host itself, its backup service, or existing guests.
+Hosts are standalone Proxmox servers, so each environment has its own API
+origin, token, datastore, bridge and template:
+
+| Env | Host | VM IDs |
+| --- | --- | --- |
+| [dev](../dev) | prox01 | 5000-5099 |
+| sandbox (this) | prox04 | 4000-4099 |
+| [prod](../prod) | prox04 | 1000-1999 |
+
+Sandbox and prod share prox04: use separate API tokens scoped to separate pools,
+and keep the ID ranges disjoint. Endpoint, datastore, bridge and template ID have
+no defaults here and must be supplied in `terraform.tfvars` from prox04. Node,
+pool and the VM ID range are variables (defaults in [variables.tf](variables.tf)).
+The module adds mandatory `env-*`, `system-*` and `owner-*` tags and rejects an
+ID outside `vm_id_range`. The pool must already exist. No infrastructure changes
+happen until an explicitly reviewed apply.
+
+**Pending migration:** the live trial VM 4001 is still on prox01, and the local
+`terraform.tfvars` is pinned to prox01 until it is torn down (steps below). Do not
+repoint the endpoint or node while it is in state: the old VM would be orphaned.
+After teardown and an empty `terraform state list`, replace the tfvars with prox04
+values from `terraform.tfvars.example`.
+
+The `moved` block in [main.tf](main.tf) adopts the VM previously tracked as
+`proxmox_virtual_environment_vm.ubuntu_trial` in the former `ubuntu-trial` root,
+so the first plan after the refactor is an in-place update (new tags), not a
+replacement. Stop if any plan proposes a destroy or replace.
 
 ## Agreed target
 
 | Setting | Trial value |
 | --- | --- |
-| Host | prox01 |
-| API origin | https://prox01.keithmarston.me.uk/ — confirm proxy versus direct port 8006 |
-| Storage | ZFS01 |
-| Network | vmbr0, IPv4 DHCP |
+| Host | prox04 target; currently still on prox01 until teardown |
+| API origin | prox04: supply in tfvars. prox01 (current): https://prox01.keithmarston.me.uk/ — user-confirmed Nginx proxy on 443 |
+| Storage | prox04 datastore from tfvars (current: ZFS01) |
+| Network | prox04 bridge from tfvars (current: vmbr0), IPv4 DHCP |
 | Trial VM | 4001 / tf-ubuntu2604-trial — must be unused cluster-wide |
 | Guest | Ubuntu Server 26.04 LTS, cloned from an existing template |
 | Resources | 2 vCPUs, 2048 MiB RAM, 20 GiB root disk |
@@ -19,7 +46,39 @@ No infrastructure changes happen until an explicitly reviewed apply.
 
 The source template ID and SSH public key are still required. The template is
 referenced by ID only: it is **not** a Terraform resource and is not deleted by
-teardown. A full clone gives the trial independent disks.
+teardown. A full clone gives the trial independent disks. Set `linked_clone = true`
+for a linked clone: its source disk must already be on ZFS01 on prox01, and the
+template/base disk must be retained for the entire life of the clone. Linked mode
+omits the clone API's target storage argument; it cannot relocate the source disk.
+The configured root disk and cloud-init drive still use ZFS01. Changing clone
+mode for an existing guest may require replacement: inspect the plan first.
+
+## ID and deletion safeguards
+
+- Proxmox rejects creation using an occupied cluster-wide VM/LXC ID; a clone
+   request does not overwrite or automatically adopt an existing guest.
+- Before a **first create or rebuild after teardown**, run
+   `bash ../../scripts/check-vm-id.sh https://prox01.keithmarston.me.uk 4001` using the same
+   endpoint/ID as your Terraform inputs and the same token environment. It calls
+   the read-only `/cluster/nextid?vmid=4001` check, fails closed on API/ACL/TLS
+   errors, and refuses any occupied ID, including a trial already in state.
+   Requires Bash, curl and jq. This is an operator preflight, not automatically
+   enforced by `terraform apply`, and not a reservation: PVE remains the final
+   collision guard if another operator allocates the ID after the check.
+- A resource precondition rejects a trial ID equal to the template ID.
+- `protect_vm = true` is the default and sets Proxmox's deletion-protection flag.
+   Explicitly disable it and apply the reviewed in-place change before teardown.
+   An administrator can bypass this flag; it is not a security boundary. It only
+   protects a VM once the provider has successfully configured it, not necessarily
+   a partial clone left by a failed create.
+- Terraform state is the ownership record, **not an independent identity check**.
+   Never import arbitrary existing guests, delete state to resolve a collision,
+   or reuse an ID externally while it is still in this state. If someone deletes
+   the managed trial outside Terraform and reuses its ID, refresh may mistake that
+   guest for the managed resource. Stop and reconcile identity/state before apply.
+- `prevent_destroy` is deliberately not set: this root is intended for controlled
+   teardown. Review every plan, especially replacements; no `-auto-approve` or
+   `create_before_destroy` with a fixed ID. Keep state locked and access restricted.
 
 ## Preflight — do not skip
 
@@ -75,7 +134,8 @@ Run Terraform from **this directory**. Each command below is a separate operator
 step; no apply or destroy has been run as part of scaffolding.
 
 1. Run `terraform init`, then `terraform fmt -check`, `terraform validate` and
-   `terraform test`. Tests use a mocked provider and never contact prox01.
+   `terraform test`. Tests use a mocked provider and never contact prox01. Also
+   run `terraform test` in [modules/vm](../../modules/vm).
 2. Run `terraform plan -out=build.tfplan`. Inspect the entire plan using
    `terraform show build.tfplan`: expect **one VM create, zero changes and zero
    destroys**. The template must not appear as a managed resource. Stop on any
@@ -87,7 +147,10 @@ step; no apply or destroy has been run as part of scaffolding.
    `/etc/os-release` reports 26.04, `cloud-init status --wait` succeeds, CPU/RAM,
    root filesystem size, DHCP/DNS and guest-agent service health. No live acceptance
    has been performed yet. Verify in Proxmox that only VM 4001 was created.
-5. Keep no useful data in the guest. Before teardown, run
+5. Keep no useful data in the guest. Before teardown, set `protect_vm = false`
+   in the local variable values, plan and apply **only the reviewed in-place
+   protection change**. If that plan proposes replacement or unrelated changes,
+   stop and investigate. Then run
    `terraform plan -destroy -out=destroy.tfplan`, then
    `terraform show destroy.tfplan`. Expect **one VM destroy only** and verify its
    ID/name is the trial. Stop if anything else is listed.
@@ -97,7 +160,8 @@ step; no apply or destroy has been run as part of scaffolding.
    disks/cloud-init volume are gone in Proxmox, while the template and pre-existing
    guests are unchanged. `terraform plan -destroy` should report no changes.
 8. Remove the two saved plan artifacts. A normal `terraform plan` now proposes a
-   fresh build — that is expected. Repeat the build/teardown once to prove the cycle.
+   fresh build — that is expected. Restore `protect_vm = true`, run the free-ID
+   preflight again and repeat the build/teardown once to prove the cycle.
 
 Rebuilt guests have new SSH host keys. Verify the new fingerprint via the Proxmox
 console before replacing a stale known-hosts entry; do not disable host-key checks.
@@ -125,6 +189,17 @@ here after commissioning; none are claimed in advance.
    and bpg/proxmox 0.87.0; provider selections/checksums recorded in
    [.terraform.lock.hcl](.terraform.lock.hcl).
 - `terraform fmt -check` and `terraform validate` passed.
-- `terraform test`: 3 passed, 0 failed (mocked plans: agreed defaults, rejection of
-   template/trial ID collision, rejection of placeholder template ID).
-- No authenticated API checks, live plans, applies, or destroys performed.
+- Latest regression validation: `terraform validate` and formatting checks for
+   the configuration/test HCL passed; 6 mocked Terraform tests passed, including
+   linked-clone storage omission, full-clone storage and explicit unprotection.
+- Module/env refactor: `terraform test` passed (10 module runs, 1 sandbox run);
+   a live read-only plan showed one in-place update (new tags, `started`
+   drift) with the `moved` block adopting VM 4001.
+- `bash ../../scripts/test-check-vm-id.sh`: 8 passed against the actual preflight script
+   with a fake curl transport (no API calls). Covers free/occupied or API failure,
+   incorrect/null/malformed responses, missing token, bad ID and insecure URL.
+- Local user variable values were not modified; their existing formatting-only
+   difference is outside the configuration HCL formatting check.
+- User-run live attempts subsequently reached PVE through Nginx: first a clone
+   permission failure on template 9026, then rejection of the storage parameter
+   for linked clones. No successful live build/teardown is recorded here.

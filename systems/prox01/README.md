@@ -7,10 +7,10 @@
 - Platform: Proxmox virtualization server.
 - Proxmox Backup Server is installed on this host; installation details and operational readiness remain to be inventoried.
 
-## Terraform trial — Ubuntu 26.04
+## Terraform environments
 
-- Isolated [build/teardown trial](terraform/ubuntu-trial/README.md) for one disposable full clone.
-- Target: VM 4001, ZFS01 storage, vmbr0, DHCP; source template ID still to be supplied.
+- [Dev environment](terraform/envs/dev) targets prox01 (IDs 5000-5099); [sandbox](terraform/envs/sandbox/README.md) and [prod](terraform/envs/prod) target [prox04](../prox04/README.md). All use the shared [VM module](terraform/modules/vm).
+- The sandbox trial VM 4001 is still on prox01 pending teardown and rebuild on prox04.
 - Review build and destruction plans separately. No existing VMs or host services are managed by this configuration.
 
 ## Planned exploration — Proxmox Backup Server

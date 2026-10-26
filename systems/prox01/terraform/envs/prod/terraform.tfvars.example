@@ -1,0 +1,16 @@
+# Copy to terraform.tfvars (ignored by Git), then replace every placeholder.
+# Required: actual Ubuntu 26.04 cloud-init template ID ON prox04, NOT a VM ID in vms.
+template_vm_id = 0
+ssh_public_key = "REPLACE_WITH_YOUR_OPENSSH_PUBLIC_KEY"
+
+# prox04 is standalone: its own API origin, token, datastore, bridge and templates.
+# Use a token scoped to the prod pool only; sandbox uses a different token.
+proxmox_endpoint = "https://REPLACE_WITH_PROX04_API_ORIGIN/"
+datastore_id     = "REPLACE_WITH_PROX04_DATASTORE"
+bridge           = "REPLACE_WITH_PROX04_BRIDGE"
+
+# Add VMs via `vms`; see variables.tf for the shape.
+vms = {}
+
+# Set false and apply the protection-only update before an approved destroy.
+protect_vm = true
