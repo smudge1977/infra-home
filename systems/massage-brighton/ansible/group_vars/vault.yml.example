@@ -1,0 +1,13 @@
+---
+# Copy to vault.yml, replace all values, then encrypt the file with ansible-vault.
+# Generate unique values locally; never commit the unencrypted file or plaintext.
+vault_wordpress_db_password: REPLACE_WITH_RANDOM_DATABASE_PASSWORD
+vault_wordpress_salts:
+  auth_key: REPLACE_WITH_RANDOM_SECRET
+  secure_auth_key: REPLACE_WITH_RANDOM_SECRET
+  logged_in_key: REPLACE_WITH_RANDOM_SECRET
+  nonce_key: REPLACE_WITH_RANDOM_SECRET
+  auth_salt: REPLACE_WITH_RANDOM_SECRET
+  secure_auth_salt: REPLACE_WITH_RANDOM_SECRET
+  logged_in_salt: REPLACE_WITH_RANDOM_SECRET
+  nonce_salt: REPLACE_WITH_RANDOM_SECRET

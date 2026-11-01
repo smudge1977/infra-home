@@ -1,0 +1,5 @@
+# Keep credentials and operator-specific connection inputs out of Git.
+inventory/lab.yml
+inventory/*.local.yml
+group_vars/vault.yml
+*.retry

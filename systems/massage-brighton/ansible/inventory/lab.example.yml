@@ -1,0 +1,14 @@
+---
+all:
+  children:
+    wordpress_lab:
+      hosts:
+        lab-massage-brighton:
+          # Set to the guest-agent address reported by the isolated Terraform root.
+          ansible_host: REPLACE_WITH_INTERNAL_IPV4
+          ansible_user: ubuntu
+          ansible_ssh_private_key_file: REPLACE_WITH_PRIVATE_KEY_PATH
+          wordpress_internal_cidr: REPLACE_WITH_INTERNAL_CIDR
+          wordpress_admin_cidr: REPLACE_WITH_ADMIN_CIDR
+          wordpress_version: REPLACE_WITH_PINNED_VERSION
+          wordpress_archive_sha256: REPLACE_WITH_OFFICIAL_SHA256

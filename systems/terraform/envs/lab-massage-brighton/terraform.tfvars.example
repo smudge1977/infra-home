@@ -1,0 +1,14 @@
+# Copy to terraform.tfvars (ignored by Git). Confirm every value on prox01 first.
+proxmox_endpoint = "https://prox01.keithmarston.me.uk/"
+datastore_id     = "REPLACE_WITH_VERIFIED_PROX01_DATASTORE"
+private_bridge   = "REPLACE_WITH_VERIFIED_ISOLATED_BRIDGE"
+private_network_confirmed = false
+
+template_vm_id = 0 # Set to the verified Ubuntu 26.04 cloud-init template ID on prox01.
+ssh_public_key  = "REPLACE_WITH_OPENSSH_PUBLIC_KEY"
+
+# Candidate only; run the read-only cluster ID check before planning/applying.
+vm_id = 5101
+
+# Optional existing resource pool; do not assume one exists.
+# pool_id = "REPLACE_WITH_EXISTING_POOL"

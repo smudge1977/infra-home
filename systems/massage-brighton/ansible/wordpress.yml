@@ -1,0 +1,262 @@
+---
+- name: Deploy internal-only lab WordPress host
+  hosts: wordpress_lab
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Require Ubuntu 26.04
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.distribution == 'Ubuntu'
+          - ansible_facts.distribution_version is version('26.04', '==')
+        fail_msg: This playbook is scoped to the Ubuntu 26.04 lab template.
+
+    - name: Require explicit internal-only network and pinned WordPress release
+      ansible.builtin.assert:
+        that:
+          - wordpress_internal_cidr is defined
+          - wordpress_internal_cidr is match('^(10\.[0-9.]+/(?:[89]|[12][0-9]|3[0-2])|192\.168\.[0-9.]+/(?:1[6-9]|2[0-9]|3[0-2])|172\.(?:1[6-9]|2[0-9]|3[01])\.[0-9.]+/(?:1[2-9]|2[0-9]|3[0-2]))$')
+          - wordpress_admin_cidr is defined
+          - wordpress_admin_cidr is match('^(10\.[0-9.]+/(?:[89]|[12][0-9]|3[0-2])|192\.168\.[0-9.]+/(?:1[6-9]|2[0-9]|3[0-2])|172\.(?:1[6-9]|2[0-9]|3[01])\.[0-9.]+/(?:1[2-9]|2[0-9]|3[0-2]))$')
+          - wordpress_version is defined
+          - wordpress_version is match('^[0-9]+\.[0-9]+(\.[0-9]+)?$')
+          - wordpress_archive_sha256 is defined
+          - wordpress_archive_sha256 is match('^[a-fA-F0-9]{64}$')
+          - vault_wordpress_db_password is defined
+          - vault_wordpress_db_password | length >= 24
+          - vault_wordpress_salts is defined
+          - vault_wordpress_salts | length == 8
+          - vault_wordpress_salts.keys() | sort == ['auth_key', 'auth_salt', 'logged_in_key', 'logged_in_salt', 'nonce_key', 'nonce_salt', 'secure_auth_key', 'secure_auth_salt']
+          - (vault_wordpress_salts.values() | select('match', '^REPLACE') | list | length) == 0
+          - (vault_wordpress_salts.values() | select('match', '^.{32,}$') | list | length) == 8
+        fail_msg: >-
+          Set private/admin IPv4 CIDRs, a pinned WordPress version and official SHA-256,
+          and encrypted vault credentials/salts before running this playbook.
+      no_log: true
+
+    - name: Require an explicitly approved lab target
+      ansible.builtin.assert:
+        that:
+          - inventory_hostname == 'lab-massage-brighton'
+          - ansible_host is defined
+          - ansible_host is match('^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)')
+        fail_msg: The inventory host must be the named lab host with an RFC1918 IPv4 address.
+
+  tasks:
+    - name: Install web, PHP, database and firewall packages
+      ansible.builtin.apt:
+        name:
+          - nginx
+          - mariadb-server
+          - php-cli
+          - php-fpm
+          - php-mysql
+          - php-xml
+          - php-curl
+          - php-gd
+          - php-mbstring
+          - php-zip
+          - php-intl
+          - python3-pymysql
+          - wp-cli
+          - ufw
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Determine installed PHP-FPM ABI version
+      ansible.builtin.command:
+        argv:
+          - php
+          - -r
+          - echo PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION;
+      register: wordpress_php_version_command
+      changed_when: false
+
+    - name: Store installed PHP-FPM ABI version
+      ansible.builtin.set_fact:
+        wordpress_php_version: "{{ wordpress_php_version_command.stdout | trim }}"
+
+    - name: Configure PHP-FPM limits
+      ansible.builtin.copy:
+        dest: "/etc/php/{{ wordpress_php_version }}/fpm/conf.d/99-wordpress.ini"
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+          memory_limit = {{ wordpress_php_memory_limit }}
+          upload_max_filesize = {{ wordpress_php_upload_max_filesize }}
+          post_max_size = {{ wordpress_php_post_max_size }}
+      notify: Restart PHP-FPM
+
+    - name: Ensure database and PHP-FPM are enabled and running
+      ansible.builtin.service:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+      loop:
+        - mariadb
+        - "php{{ wordpress_php_version }}-fpm"
+
+    - name: Create the WordPress database
+      community.mysql.mysql_db:
+        name: "{{ wordpress_db_name }}"
+        state: present
+        encoding: utf8mb4
+        collation: utf8mb4_unicode_ci
+        login_unix_socket: /run/mysqld/mysqld.sock
+
+    - name: Create the local-only WordPress database user
+      community.mysql.mysql_user:
+        name: "{{ wordpress_db_user }}"
+        password: "{{ wordpress_db_password }}"
+        host: localhost
+        priv: "{{ wordpress_db_name }}.*:ALL"
+        state: present
+        login_unix_socket: /run/mysqld/mysqld.sock
+      no_log: true
+
+    - name: Download the pinned WordPress release with checksum validation
+      ansible.builtin.get_url:
+        url: "https://wordpress.org/wordpress-{{ wordpress_version }}.tar.gz"
+        dest: "/var/cache/wordpress-{{ wordpress_version }}.tar.gz"
+        checksum: "sha256:{{ wordpress_archive_sha256 }}"
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Extract the verified WordPress release
+      ansible.builtin.unarchive:
+        src: "/var/cache/wordpress-{{ wordpress_version }}.tar.gz"
+        dest: /var/www
+        remote_src: true
+        creates: "{{ wordpress_document_root }}/wp-includes/version.php"
+        owner: root
+        group: www-data
+
+    - name: Verify WordPress core checksums against the official checksum API
+      ansible.builtin.command:
+        argv:
+          - wp
+          - core
+          - verify-checksums
+          - "--path={{ wordpress_document_root }}"
+          - "--version={{ wordpress_version }}"
+          - --locale=en_US
+          - --allow-root
+      register: wordpress_checksum_result
+      changed_when: false
+
+    - name: Set WordPress core files to root-owned, read-only-by-webserver
+      ansible.builtin.file:
+        path: "{{ wordpress_document_root }}"
+        state: directory
+        owner: root
+        group: www-data
+        mode: 'u=rwX,g=rX,o=rX'
+        recurse: true
+
+    - name: Create writable uploads directory only
+      ansible.builtin.file:
+        path: "{{ wordpress_document_root }}/wp-content/uploads"
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: '0750'
+
+    - name: Install the protected WordPress database configuration
+      ansible.builtin.template:
+        src: templates/wp-config.php.j2
+        dest: "{{ wordpress_document_root }}/wp-config.php"
+        owner: root
+        group: www-data
+        mode: '0640'
+      no_log: true
+
+    - name: Install the internal-only Nginx site
+      ansible.builtin.template:
+        src: templates/wordpress.conf.j2
+        dest: /etc/nginx/sites-available/wordpress
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Validate and restart Nginx
+
+    - name: Enable the WordPress Nginx site
+      ansible.builtin.file:
+        src: /etc/nginx/sites-available/wordpress
+        dest: /etc/nginx/sites-enabled/wordpress
+        state: link
+      notify: Validate and restart Nginx
+
+    - name: Remove the default Nginx site
+      ansible.builtin.file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: Validate and restart Nginx
+
+    - name: Apply and validate Nginx configuration before enabling the firewall
+      ansible.builtin.meta: flush_handlers
+
+    - name: Set UFW default policy to deny inbound traffic
+      community.general.ufw:
+        direction: incoming
+        policy: deny
+
+    - name: Set UFW default policy to allow outbound package and update traffic
+      community.general.ufw:
+        direction: outgoing
+        policy: allow
+
+    - name: Permit SSH only from the administration network
+      community.general.ufw:
+        rule: allow
+        port: "{{ wordpress_ssh_port }}"
+        proto: tcp
+        src: "{{ wordpress_admin_cidr }}"
+        comment: SSH from internal administration network
+
+    - name: Permit HTTP only from the trusted internal client network
+      community.general.ufw:
+        rule: allow
+        port: '80'
+        proto: tcp
+        src: "{{ wordpress_internal_cidr }}"
+        comment: WordPress from internal client network
+
+    - name: Enable the host firewall after installing the allow rules
+      community.general.ufw:
+        state: enabled
+
+    - name: Ensure Nginx is enabled and running
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: Report deployment boundary
+      ansible.builtin.debug:
+        msg: >-
+          WordPress files and local database are installed. HTTP is allowed only from
+          {{ wordpress_internal_cidr }}; SSH is allowed only from {{ wordpress_admin_cidr }}.
+          Complete the WordPress setup wizard over a trusted internal network.
+
+  handlers:
+    - name: Restart PHP-FPM
+      ansible.builtin.service:
+        name: "php{{ wordpress_php_version }}-fpm"
+        state: restarted
+
+    - name: Validate and restart Nginx
+      ansible.builtin.command:
+        argv:
+          - nginx
+          - -t
+      changed_when: true
+      notify: Restart Nginx
+
+    - name: Restart Nginx
+      ansible.builtin.service:
+        name: nginx
+        state: restarted
