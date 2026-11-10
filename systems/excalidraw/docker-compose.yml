@@ -1,0 +1,88 @@
+name: excalidraw
+
+services:
+  frontend:
+    image: ${FRONTEND_IMAGE:?Set FRONTEND_IMAGE}
+    restart: unless-stopped
+    environment:
+      VITE_APP_BACKEND_V2_GET_URL: https://${APP_HOST:?Set APP_HOST}/storage/api/v2/scenes/
+      VITE_APP_BACKEND_V2_POST_URL: https://${APP_HOST}/storage/api/v2/scenes/
+      VITE_APP_HTTP_STORAGE_BACKEND_URL: https://${APP_HOST}/storage/api/v2
+      VITE_APP_WS_SERVER_URL: https://${APP_HOST}
+      VITE_APP_FIREBASE_CONFIG: '{}'
+      VITE_APP_STORAGE_BACKEND: http
+      VITE_APP_DISABLE_TRACKING: 'true'
+      PUBLIC_URL: https://${APP_HOST}
+    ports:
+      - 127.0.0.1:${FRONTEND_PORT:-9013}:80
+    networks:
+      - web
+    logging: &logging
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+
+  storage:
+    image: ${STORAGE_IMAGE:?Set STORAGE_IMAGE}
+    restart: unless-stopped
+    environment:
+      PORT: '8080'
+      GLOBAL_PREFIX: /api/v2
+      STORAGE_URI: mongodb://excalidraw:${MONGO_APP_PASSWORD:?Set MONGO_APP_PASSWORD}@mongodb:27017/excalidraw?authSource=excalidraw
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    ports:
+      - 127.0.0.1:${STORAGE_PORT:-9014}:8080
+    networks:
+      - web
+      - database
+    logging: *logging
+
+  room:
+    image: ${ROOM_IMAGE:?Set ROOM_IMAGE}
+    restart: unless-stopped
+    environment:
+      PORT: '80'
+    ports:
+      - 127.0.0.1:${ROOM_PORT:-9015}:80
+    networks:
+      - web
+    logging: *logging
+
+  mongodb:
+    image: ${MONGO_IMAGE:?Set MONGO_IMAGE}
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?Set MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: excalidraw
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD:?Set MONGO_APP_PASSWORD}
+    volumes:
+      - mongo-data:/data/db
+      - mongo-config:/data/configdb
+      - ./config/mongo-init.js:/docker-entrypoint-initdb.d/10-excalidraw.js:ro
+    networks:
+      - database
+    healthcheck:
+      test:
+        - CMD
+        - mongosh
+        - --quiet
+        - --eval
+        - "const admin = db.getSiblingDB('admin'); admin.auth(process.env.MONGO_INITDB_ROOT_USERNAME, process.env.MONGO_INITDB_ROOT_PASSWORD); if (admin.runCommand({ping: 1}).ok !== 1) quit(1);"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    logging: *logging
+
+networks:
+  web:
+  database:
+    internal: true
+
+volumes:
+  mongo-data:
+  mongo-config:
