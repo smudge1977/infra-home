@@ -1,10 +1,10 @@
 variable "proxmox_endpoint" {
-  description = "HTTPS API origin for prox01; TLS verification remains enabled."
+  description = "HTTPS API origin for prox04; TLS verification remains enabled."
   type        = string
 
   validation {
     condition     = can(regex("^https://[^/]+/?$", var.proxmox_endpoint))
-    error_message = "Use the prox01 HTTPS origin, optionally with a port, not an API path."
+    error_message = "Use the prox04 HTTPS origin, optionally with a port, not an API path."
   }
 }
 
@@ -15,17 +15,17 @@ variable "owner" {
 }
 
 variable "datastore_id" {
-  description = "Verified prox01 datastore supporting VM disks and cloud-init drives."
+  description = "Verified prox04 datastore supporting VM disks and cloud-init drives."
   type        = string
 }
 
 variable "private_bridge" {
-  description = "Verified prox01 bridge attached only to the intended internal network."
+  description = "Verified prox04 bridge attached only to the intended internal network."
   type        = string
 
   validation {
-    condition     = length(trimspace(var.private_bridge)) > 0 && !can(regex("REPLACE|vmbr0", var.private_bridge))
-    error_message = "Set an explicitly verified private bridge; the generic vmbr0 default is not accepted."
+    condition     = length(trimspace(var.private_bridge)) > 0 && !can(regex("REPLACE", var.private_bridge))
+    error_message = "Set an explicitly verified private bridge; replace the example placeholder."
   }
 }
 
@@ -41,9 +41,32 @@ variable "private_network_confirmed" {
 }
 
 variable "pool_id" {
-  description = "Existing prox01 resource pool, if one is required; this root does not create it."
+  description = "Existing prox04 resource pool, if one is required; this root does not create it."
   type        = string
   default     = null
+}
+
+variable "linked_clone" {
+  description = "Use a Proxmox linked clone; the source template disk must be on datastore_id and retained while this VM exists."
+  type        = bool
+  default     = false
+}
+
+variable "protect_vm" {
+  description = "Enable Proxmox deletion protection. Disabled by default for this disposable dev VM; enable only when deliberate retention is required."
+  type        = bool
+  default     = false
+}
+
+variable "disk_size_gb" {
+  description = "Root volume size in GiB; must be at least the source template disk size because Proxmox cannot shrink a clone."
+  type        = number
+  default     = 100
+
+  validation {
+    condition     = var.disk_size_gb >= 20 && floor(var.disk_size_gb) == var.disk_size_gb
+    error_message = "disk_size_gb must be a whole number of GiB, at least 20 and no smaller than the source template disk."
+  }
 }
 
 variable "vm_id" {
@@ -65,12 +88,12 @@ variable "vm_id_range" {
 }
 
 variable "template_vm_id" {
-  description = "Existing, clean Ubuntu 26.04 cloud-init template ID on prox01."
+  description = "Existing, clean Ubuntu 26.04 cloud-init template ID on prox04."
   type        = number
 
   validation {
     condition     = var.template_vm_id >= 100 && floor(var.template_vm_id) == var.template_vm_id
-    error_message = "Set the numeric ID of the verified Ubuntu 26.04 cloud-init template on prox01."
+    error_message = "Set the numeric ID of the verified Ubuntu 26.04 cloud-init template on prox04."
   }
 }
 

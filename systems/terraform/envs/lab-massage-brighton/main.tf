@@ -14,7 +14,7 @@ module "vm" {
   owner       = var.owner
   extra_tags  = ["wordpress", "internal-only"]
 
-  node_name    = "prox01"
+  node_name    = "prox04"
   datastore_id = var.datastore_id
   bridge       = var.private_bridge
   pool_id      = var.pool_id
@@ -25,8 +25,8 @@ module "vm" {
   ssh_public_key = var.ssh_public_key
   cores          = 2
   memory_mb      = 4096
-  disk_size_gb   = 40
-  linked_clone   = false
+  disk_size_gb   = var.disk_size_gb
+  linked_clone   = var.linked_clone
   on_boot        = true
-  protect_vm     = true
+  protect_vm     = var.protect_vm
 }
