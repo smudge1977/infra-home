@@ -1,0 +1,79 @@
+---
+- name: Install the host-exec restricted inspection gateway (lab POC)
+  hosts: host_exec_lab
+  become: true
+  gather_facts: true
+
+  vars:
+    host_exec_user: agent-inspect
+    host_exec_group: agent-inspect
+    host_exec_home: /var/lib/agent-inspect
+    host_exec_gateway_path: /usr/local/sbin/host-exec-gateway
+
+  pre_tasks:
+    - name: Require an explicitly designated lab target
+      ansible.builtin.assert:
+        that:
+          - host_exec_environment | default('') == 'lab'
+          - ansible_facts.system == 'Linux'
+          - ansible_facts.service_mgr == 'systemd'
+        fail_msg: >-
+          This POC may only be applied to a Linux systemd host explicitly
+          marked host_exec_environment: lab.
+
+    - name: Require a dedicated Ed25519 public key
+      ansible.builtin.assert:
+        that:
+          - host_exec_authorized_key is defined
+          - host_exec_authorized_key is string
+          - host_exec_authorized_key is regex('^ssh-ed25519 [A-Za-z0-9+/]+={0,3}( .*)?$')
+        fail_msg: Set host_exec_authorized_key to the dedicated inspection Ed25519 public key.
+
+  tasks:
+    - name: Create the dedicated group
+      ansible.builtin.group:
+        name: "{{ host_exec_group }}"
+        system: true
+        state: present
+
+    - name: Create the locked, unprivileged inspection account
+      ansible.builtin.user:
+        name: "{{ host_exec_user }}"
+        group: "{{ host_exec_group }}"
+        groups: ''
+        append: false
+        home: "{{ host_exec_home }}"
+        create_home: true
+        shell: /bin/sh
+        password: '!'
+        update_password: always
+        system: true
+        state: present
+
+    - name: Restrict the inspection account home directory
+      ansible.builtin.file:
+        path: "{{ host_exec_home }}"
+        state: directory
+        owner: "{{ host_exec_user }}"
+        group: "{{ host_exec_group }}"
+        mode: '0700'
+
+    - name: Install the root-owned inspection gateway
+      ansible.builtin.copy:
+        src: files/host_exec_gateway.py
+        dest: "{{ host_exec_gateway_path }}"
+        owner: root
+        group: root
+        mode: '0755'
+        validate: /usr/bin/python3 -m py_compile %s
+
+    - name: Install the sole forced-command SSH key
+      ansible.posix.authorized_key:
+        user: "{{ host_exec_user }}"
+        key: "{{ host_exec_authorized_key }}"
+        path: "{{ host_exec_home }}/.ssh/authorized_keys"
+        state: present
+        exclusive: true
+        manage_dir: true
+        key_options: 'command="{{ host_exec_gateway_path }}",no-port-forwarding,no-agent-forwarding,no-X11-forwarding,no-pty,no-user-rc'
+        comment: host-exec-inspection

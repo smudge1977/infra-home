@@ -1,0 +1,11 @@
+---
+all:
+  children:
+    host_exec_lab:
+      hosts:
+        lab-massage-brighton:
+          ansible_host: 192.0.2.10
+          ansible_user: keith
+          host_exec_environment: lab
+          # Replace with the dedicated agent-inspect Ed25519 public key.
+          host_exec_authorized_key: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHUq8KR9IvnCCSrqkH/pdpCvFfE8HfbqBweHM2it7kpR keith@iot-home'
