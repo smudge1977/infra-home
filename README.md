@@ -47,6 +47,15 @@ Sprint numbering is local to this repository. HeatMesh owns heating behavior and
 
 Future, unscheduled operational work is tracked in the [infrastructure backlog](docs/backlog.md) and Forgejo issues labeled **backlog**.
 
+## Recording infrastructure changes
+
+Use the [record-infrastructure-change skill](.github/skills/record-infrastructure-change/SKILL.md)
+to create or update Forgejo change records through the authenticated API, not
+browser automation. Each change issue needs **change** and the affected system's
+label (for example **massage-brighton**); its due date is the planned or actual
+change date, corrected to the actual date after deployment. Close completed
+changes only when deployment and verification are confirmed.
+
 ## Design notes
 
 - [Home automation stack and migration](docs/design/home-automation-stack.md)
