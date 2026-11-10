@@ -9,10 +9,12 @@ Deployment, networking and operational recovery for the home infrastructure esta
 | [prox04](systems/prox04/README.md) | Proxmox virtualization host — HPE DL380, 256 GB RAM |
 | [prox01](systems/prox01/README.md) | Proxmox virtualization host — consumer NUC-type machine, 32 GB RAM; Proxmox Backup Server installed, exploration planned |
 | Forgejo, runners and registry | Git hosting, CI execution and package/container publishing |
+| [Excalidraw](systems/excalidraw/README.md) | Proposed separate drawing/collaboration stack with persistent scene storage; not deployed |
 | Home Assistant and associated services | Home Assistant, ESPHome, Mosquitto and Zigbee2MQTT deployment and recovery |
 | VyOS | Firewall, routing and network entry point |
 | massage-brighton | Application/service hosting and operations; deployment details to inventory |
-| Zabbix | Infrastructure monitoring and alerting |
+| [Zabbix](systems/zabbix/README.md) | Infrastructure monitoring and alerting; existing deployment to inventory |
+| [Monitoring appliance](docs/design/monitoring-architecture.md) | Proposed Zabbix, Alerta and Wazuh LXC with shared PostgreSQL; not deployed |
 | MeshCentral | Remote management infrastructure |
 | maillist.cloud | Application/service hosting and operations; deployment details to inventory |
 
@@ -50,3 +52,7 @@ Future, unscheduled operational work is tracked in the [infrastructure backlog](
 - [Home automation stack and migration](docs/design/home-automation-stack.md)
 - [Home Assistant configuration ownership and backups](docs/design/homeassistant.md)
 - [Forgejo deployment](docs/design/forgejo.md)
+- [Excalidraw collaboration and persistent scene storage](docs/design/excalidraw.md)
+- [Monitoring appliance architecture](docs/design/monitoring-architecture.md)
+- [Monitoring deployment, shared PostgreSQL and recovery](docs/design/monitoring-deployment.md)
+- [Monitoring alert aggregation and Teams notification](docs/design/monitoring-alerting.md)

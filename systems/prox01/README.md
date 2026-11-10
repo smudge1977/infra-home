@@ -20,6 +20,10 @@
 - [ ] Evaluate VM/container backups from prox01 and [prox04](../prox04/README.md), including access permissions and scheduling.
 - [ ] Test backup and restoration with a non-critical workload and record recovery evidence.
 - [ ] Review encryption, credential handling and an off-host copy so backups do not rely solely on prox01.
+- [ ] Feed readiness and guest-restore evidence into the
+	[layered backup evaluation](../../docs/design/backup-recovery.md); compare PBS
+	with Borg/restic for file and completed database-dump recovery, including
+	independent destinations and storage not covered by guest backups.
 
 ## Outstanding inventory
 

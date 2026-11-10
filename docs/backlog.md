@@ -11,8 +11,46 @@ additional monitoring plugs are planned in
 than left as unscheduled backlog work. Heating/controller-specific use of energy
 data remains separate from this infrastructure dashboard.
 
+## Excalidraw collaboration service
+
+- [ ] Commission the [Excalidraw project](../systems/excalidraw/README.md): choose
+  its host, review/pin supported images, provision private HTTPS/DNS ingress,
+  verify cross-browser scene/image persistence and complete isolated backup recovery.
+  Follow the [design gate and acceptance checklist](design/excalidraw.md); local
+  configuration is not a deployed service. No sprint or Forgejo issue assigned yet.
+- [ ] Decide whether saved scene links and editable exports meet the drawing workflow,
+  or design a thin named-document layer backed by private Forgejo `.excalidraw` files.
+  Login, file listing, explicit Save/Open and version conflict handling are not
+  provided by the collaboration stack and are not implemented here.
+
+## Monitoring appliance
+
+- [ ] Commission the proposed [monitoring architecture](design/monitoring-architecture.md):
+  one unprivileged Ubuntu 24.04 Proxmox LXC, separate Zabbix/Alerta/Wazuh Compose
+  projects and one shared PostgreSQL infrastructure project. Select host/storage,
+  inventory existing Zabbix, pin compatible versions and pass the
+  [deployment and recovery gates](design/monitoring-deployment.md), including a
+  VM fallback if LXC compatibility requires unacceptable privilege/kernel changes.
+- [ ] Implement [alert aggregation](design/monitoring-alerting.md): normalize
+  actionable Zabbix/Wazuh events into Alerta, verify Teams or the chosen destination,
+  test problem/recovery/deduplication and provide an independent outage alert path.
+- [ ] Define retention, resource budgets and RPO/RTO; demonstrate isolated recovery
+  of both SQL databases, Wazuh state/indices and protected identities. Template
+  exports in issue #22 remain supplementary, not a full Zabbix recovery plan.
+
+Design only: no sprint or Forgejo issue assigned, no guest or integration deployed.
+
 ## Backup and recovery
 
+- [ ] **Evaluate layered backup/restore strategy: Borg, restic, PBS and portable
+  dumps** — Forgejo issue creation pending; intended label **backlog**, no sprint.
+  Use the [design and issue-ready acceptance criteria](design/backup-recovery.md)
+  to compare **Borg Backup** with restic and the existing PBS installation.
+  Cover infrastructure rebuild, VM/LXC recovery, consistent application/database
+  dumps, general file/volume recovery and portable exports; define RPO/RTO,
+  independent encrypted copies, retention, key recovery and isolated restore tests.
+  Feed the decision into issues #21–#24 and Excalidraw commissioning rather than
+  assuming one tool or a simple on-host file dump covers every layer.
 - [ ] **Forgejo backups** — [Issue #21](https://git.keithmarston.me.uk/Home/infra-home/issues/21).
   Inventory the live database and storage; protect repositories, consistent
   database snapshots, configuration, LFS, attachments and package/registry data
@@ -35,6 +73,9 @@ data remains separate from this infrastructure dashboard.
 
 - Record the owning host, backup destination, schedule, retention and recovery
   objectives before implementation; do not assume all systems share a host.
+- Identify recovery layers and supported data-consistency methods using the
+  [backup/recovery evaluation](design/backup-recovery.md); distinguish portable
+  exports and completed file/database dumps from whole-service and guest backups.
 - Keep runtime credentials, private keys, databases and sensitive backup payloads
   out of Git. Encrypt off-host copies and use least-privilege backup access.
 - Monitor failed or stale backups and preserve the last known-good backup.

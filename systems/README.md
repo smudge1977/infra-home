@@ -6,6 +6,7 @@ This repository is split by system ownership and by host, not by one shared Comp
 - [prox01](prox01/README.md) — Proxmox host on a consumer NUC-type machine with 32 GB RAM; Proxmox Backup Server is installed, with exploration planned.
 - `systems/iot-home/home-automation/` — Home Assistant, ESPHome, Mosquitto and Zigbee2MQTT for the `iot-home` host.
 - `systems/forgejo/` — Forgejo, runners and registry deployment inventory.
+- [excalidraw](excalidraw/README.md) — proposed separate Compose drawing/collaboration stack with MongoDB scene persistence; host assignment and deployment pending.
 - `systems/zabbix/` — monitoring stack deployment inventory.
 - `systems/meshcentral/` — remote management stack deployment inventory.
 - `systems/maillist/` — mail-hosted services deployment inventory.
