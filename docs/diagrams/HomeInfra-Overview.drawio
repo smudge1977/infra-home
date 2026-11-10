@@ -4,9 +4,6 @@
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="qpZ3Wb6ZU6R09h91shVr-29" parent="1" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" value="" vertex="1">
-          <mxGeometry height="390" width="680" x="-910" y="-390" as="geometry" />
-        </mxCell>
         <mxCell id="qpZ3Wb6ZU6R09h91shVr-2" parent="1" style="image;html=1;image=img/lib/clip_art/networking/Bridge_128x128.png" value="" vertex="1">
           <mxGeometry height="80" width="80" x="334" y="160" as="geometry" />
         </mxCell>
@@ -14,31 +11,28 @@
           <mxGeometry height="60" width="120" x="-773" y="360" as="geometry" />
         </mxCell>
         <mxCell id="qpZ3Wb6ZU6R09h91shVr-5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;" value="&lt;div&gt;AUTHENTICATION / AUTHORIZATION&lt;/div&gt;lxc container&lt;div&gt;Authentik&lt;/div&gt;&lt;div&gt;Caddy reverse proxy&lt;/div&gt;&lt;div&gt;DNS thirtyone.internal&lt;/div&gt;" vertex="1">
-          <mxGeometry height="120" width="200" x="230" y="360" as="geometry" />
+          <mxGeometry height="120" width="200" x="230" y="300" as="geometry" />
         </mxCell>
         <mxCell id="qpZ3Wb6ZU6R09h91shVr-6" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Single public IP address" vertex="1">
           <mxGeometry height="60" width="70" x="360" y="100" as="geometry" />
         </mxCell>
         <mxCell id="qpZ3Wb6ZU6R09h91shVr-7" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="NAT public-ip:443 -&amp;gt; Caddy" vertex="1">
-          <mxGeometry height="30" width="160" x="260" y="310" as="geometry" />
+          <mxGeometry height="30" width="160" x="250" y="270" as="geometry" />
         </mxCell>
         <mxCell id="qpZ3Wb6ZU6R09h91shVr-8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;" value="&lt;div&gt;REMOTE ACCESS&lt;/div&gt;VyOS - Wireguard&lt;div&gt;NAT of public ip to connect to&lt;/div&gt;&lt;div&gt;Provide DNS thirtyone.internal to clients&lt;/div&gt;&lt;div&gt;Rules to internal hosts&lt;/div&gt;&lt;div&gt;Wireguard provides acces to internal network&amp;nbsp;&lt;/div&gt;&lt;div&gt;VPNs to other locations&lt;/div&gt;" vertex="1">
           <mxGeometry height="140" width="220" x="490" y="360" as="geometry" />
         </mxCell>
-        <mxCell id="qpZ3Wb6ZU6R09h91shVr-9" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="Kamartra VPS&lt;div&gt;Massage Brighton&lt;/div&gt;&lt;div&gt;Dose automatic backups in Wordpress&lt;/div&gt;" vertex="1">
-          <mxGeometry height="80" width="260" x="-890" y="-380" as="geometry" />
-        </mxCell>
         <mxCell id="qpZ3Wb6ZU6R09h91shVr-10" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="Kamartra&amp;nbsp;&lt;div&gt;mailcloud VPS&lt;/div&gt;" vertex="1">
-          <mxGeometry height="60" width="120" x="620" y="-310" as="geometry" />
+          <mxGeometry height="60" width="120" x="-910" y="-540" as="geometry" />
         </mxCell>
         <mxCell id="qpZ3Wb6ZU6R09h91shVr-11" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="Kamartra&amp;nbsp;&lt;div&gt;meshcentral&lt;/div&gt;&lt;div&gt;Unifi cloud&lt;/div&gt;" vertex="1">
-          <mxGeometry height="60" width="120" x="620" y="-410" as="geometry" />
+          <mxGeometry height="60" width="120" x="-910" y="-640" as="geometry" />
         </mxCell>
         <mxCell id="qpZ3Wb6ZU6R09h91shVr-12" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#232F3D;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.generic_firewall;" value="" vertex="1">
           <mxGeometry height="40.62" width="48" x="480" y="355.38" as="geometry" />
         </mxCell>
-        <mxCell id="qpZ3Wb6ZU6R09h91shVr-13" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#7AA116;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.bucket;" value="Terraform Storage&lt;div&gt;My account iD: 111111111&lt;/div&gt;" vertex="1">
-          <mxGeometry height="78" width="75" x="60" y="-218" as="geometry" />
+        <mxCell id="qpZ3Wb6ZU6R09h91shVr-13" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#7AA116;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.bucket;" value="Terraform State Storage&lt;div&gt;My account iD: 111111111&lt;/div&gt;" vertex="1">
+          <mxGeometry height="78" width="75" x="660" y="-370" as="geometry" />
         </mxCell>
         <mxCell id="qpZ3Wb6ZU6R09h91shVr-14" parent="1" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#DD344C;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloud_directory;" value="" vertex="1">
           <mxGeometry height="30" width="30" x="390" y="370" as="geometry" />
@@ -53,7 +47,7 @@
           <mxGeometry height="154.62" width="630" x="-1410" y="360" as="geometry" />
         </mxCell>
         <mxCell id="qpZ3Wb6ZU6R09h91shVr-18" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="1Password CLI&amp;nbsp;&lt;div&gt;OpenBao&lt;/div&gt;&lt;div&gt;Passbolt&lt;/div&gt;" vertex="1">
-          <mxGeometry height="60" width="280" x="-30" y="-340" as="geometry" />
+          <mxGeometry height="60" width="280" x="640" y="-478" as="geometry" />
         </mxCell>
         <mxCell id="qpZ3Wb6ZU6R09h91shVr-19" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="250Gb online SSD backup volume" vertex="1">
           <mxGeometry height="110" width="150" x="-1350" y="514.62" as="geometry" />
@@ -73,15 +67,6 @@
         <mxCell id="qpZ3Wb6ZU6R09h91shVr-23" parent="qpZ3Wb6ZU6R09h91shVr-25" style="rounded=0;whiteSpace=wrap;html=1;align=left;" value="HeatMesh&lt;div&gt;HomeAssistant&lt;/div&gt;&lt;div&gt;Zigbee2MQTT&lt;/div&gt;&lt;div style=&quot;&quot;&gt;ESPHome&lt;/div&gt;" vertex="1">
           <mxGeometry height="60" width="120" x="20" y="36" as="geometry" />
         </mxCell>
-        <mxCell id="qpZ3Wb6ZU6R09h91shVr-26" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="Wordpress &amp;amp; MySQL&lt;div&gt;2:15 daily replicate&amp;nbsp;/var/www/html/wp-content/ai1wm-backups to avr-pi-01&lt;/div&gt;" vertex="1">
-          <mxGeometry height="60" width="250" x="-600" y="-380" as="geometry" />
-        </mxCell>
-        <mxCell id="qpZ3Wb6ZU6R09h91shVr-27" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;" value="Static massage-brihgton&lt;div&gt;Existing on Github somewher?&lt;/div&gt;" vertex="1">
-          <mxGeometry height="60" width="210" x="-600" y="-310" as="geometry" />
-        </mxCell>
-        <mxCell id="qpZ3Wb6ZU6R09h91shVr-28" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;" value="Static keithmarston.me.uk&lt;br&gt;&lt;div&gt;Exists on Gitlab somewhere??&lt;/div&gt;" vertex="1">
-          <mxGeometry height="60" width="210" x="-600" y="-240" as="geometry" />
-        </mxCell>
         <mxCell id="qpZ3Wb6ZU6R09h91shVr-30" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="&lt;div&gt;SOURCE CI&lt;/div&gt;ForgeJo git.ekithmarston.me.uk" vertex="1">
           <mxGeometry height="60" width="120" x="-100" y="360" as="geometry" />
         </mxCell>
@@ -94,14 +79,6 @@
         <mxCell id="qpZ3Wb6ZU6R09h91shVr-33" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;" value="&lt;div&gt;MONITORING&lt;/div&gt;Wazuh&lt;div&gt;Alerta&lt;/div&gt;&lt;div&gt;New Zabbix?&lt;/div&gt;" vertex="1">
           <mxGeometry height="60" width="120" x="750" y="360" as="geometry" />
         </mxCell>
-        <mxCell id="qpZ3Wb6ZU6R09h91shVr-34" parent="1" style="whiteSpace=wrap;html=1;align=center;verticalAlign=middle;treeFolding=1;treeMoving=1;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;startArrow&quot;:&quot;none&quot;,&quot;endArrow&quot;:&quot;none&quot;};" value="Github" vertex="1">
-          <mxGeometry height="60" width="100" x="-430" y="-140" as="geometry" />
-        </mxCell>
-        <mxCell id="qpZ3Wb6ZU6R09h91shVr-35" edge="1" parent="1" source="qpZ3Wb6ZU6R09h91shVr-28" style="edgeStyle=elbowEdgeStyle;elbow=vertical;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;startArrow=none;endArrow=none;rounded=0;curved=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="qpZ3Wb6ZU6R09h91shVr-34" value="">
-          <mxGeometry relative="1" x="0.2903" as="geometry">
-            <mxPoint x="-450" y="-180" as="sourcePoint" />
-          </mxGeometry>
-        </mxCell>
         <mxCell id="qpZ3Wb6ZU6R09h91shVr-36" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;" value="&lt;div&gt;oci-svr01&lt;/div&gt;Oracle Cloud infra&lt;div&gt;Get back in!!&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;color: rgb(22, 21, 19); font-family: &amp;quot;Oracle Sans&amp;quot;, -apple-system, BlinkMacSystemFont, &amp;quot;Segoe UI&amp;quot;, &amp;quot;Helvetica Neue&amp;quot;, Arial, sans-serif; font-size: 12.0312px; text-align: start; background-color: rgb(255, 248, 247);&quot;&gt;VCN CIDR blocks 10.0.0.0/16&lt;br&gt;10.0.40.0/24&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;color: rgb(22, 21, 19); font-family: &amp;quot;Oracle Sans&amp;quot;, -apple-system, BlinkMacSystemFont, &amp;quot;Segoe UI&amp;quot;, &amp;quot;Helvetica Neue&amp;quot;, Arial, sans-serif; font-size: 12.0312px; text-align: start; background-color: rgb(255, 248, 247);&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;" vertex="1">
           <mxGeometry height="170" width="370" x="620" y="-180" as="geometry" />
         </mxCell>
@@ -110,6 +87,38 @@
         </mxCell>
         <mxCell id="qpZ3Wb6ZU6R09h91shVr-38" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="TODO&lt;div&gt;Move DB to Postgres&lt;br&gt;Not sure when that is needed?&lt;/div&gt;" vertex="1">
           <mxGeometry height="145" width="80" x="-90" y="414.62" as="geometry" />
+        </mxCell>
+        <mxCell id="hhkvdEIbvInvgBU6_yjq-2" connectable="0" parent="1" style="group" value="" vertex="1">
+          <mxGeometry height="390" width="680" x="-1430" y="-420" as="geometry" />
+        </mxCell>
+        <mxCell id="qpZ3Wb6ZU6R09h91shVr-29" parent="hhkvdEIbvInvgBU6_yjq-2" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" value="" vertex="1">
+          <mxGeometry height="390" width="680" as="geometry" />
+        </mxCell>
+        <mxCell id="qpZ3Wb6ZU6R09h91shVr-9" parent="hhkvdEIbvInvgBU6_yjq-2" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="Kamartra VPS&lt;div&gt;Massage Brighton&lt;/div&gt;&lt;div&gt;Dose automatic backups in Wordpress&lt;/div&gt;" vertex="1">
+          <mxGeometry height="80" width="260" x="50" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="qpZ3Wb6ZU6R09h91shVr-26" parent="hhkvdEIbvInvgBU6_yjq-2" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="Wordpress &amp;amp; MySQL&lt;div&gt;2:15 daily replicate&amp;nbsp;/var/www/html/wp-content/ai1wm-backups to avr-pi-01&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="250" x="340" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="qpZ3Wb6ZU6R09h91shVr-27" parent="hhkvdEIbvInvgBU6_yjq-2" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;" value="Static massage-brihgton&lt;div&gt;Existing on Github somewher?&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="210" x="340" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="qpZ3Wb6ZU6R09h91shVr-28" parent="hhkvdEIbvInvgBU6_yjq-2" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;" value="Static keithmarston.me.uk&lt;br&gt;&lt;div&gt;Exists on Gitlab somewhere??&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="210" x="340" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="qpZ3Wb6ZU6R09h91shVr-34" parent="hhkvdEIbvInvgBU6_yjq-2" style="whiteSpace=wrap;html=1;align=center;verticalAlign=middle;treeFolding=1;treeMoving=1;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;startArrow&quot;:&quot;none&quot;,&quot;endArrow&quot;:&quot;none&quot;};" value="Github" vertex="1">
+          <mxGeometry height="60" width="100" x="510" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="qpZ3Wb6ZU6R09h91shVr-35" edge="1" parent="hhkvdEIbvInvgBU6_yjq-2" source="qpZ3Wb6ZU6R09h91shVr-28" style="edgeStyle=elbowEdgeStyle;elbow=vertical;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;startArrow=none;endArrow=none;rounded=0;curved=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="qpZ3Wb6ZU6R09h91shVr-34" value="">
+          <mxGeometry relative="1" x="0.2903" as="geometry">
+            <mxPoint x="490" y="220" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="hhkvdEIbvInvgBU6_yjq-3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="prox01" vertex="1">
+          <mxGeometry height="60" width="120" x="-773" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="hhkvdEIbvInvgBU6_yjq-4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;" value="docker stacks&lt;div&gt;Misc untils and stacks - various release of little apps&lt;/div&gt;&lt;div&gt;like Exciela draw&lt;/div&gt;&lt;div&gt;Change calander from frogeo data&lt;/div&gt;" vertex="1">
+          <mxGeometry height="80" width="370" x="910" y="360" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
