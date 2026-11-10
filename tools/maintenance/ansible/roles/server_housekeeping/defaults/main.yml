@@ -1,0 +1,7 @@
+---
+housekeeping_apt_autoremove: true
+housekeeping_apt_purge: true
+housekeeping_apt_autoclean: true
+housekeeping_docker_enabled: true
+housekeeping_docker_image_until: 720h
+housekeeping_docker_build_cache_until: 720h

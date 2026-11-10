@@ -1,0 +1,12 @@
+---
+all:
+  children:
+    apt_managed:
+      hosts:
+        # Add only Debian/Ubuntu servers explicitly approved for APT upgrades.
+        # Use ansible_host and ansible_user as required by your environment.
+        # Example:
+        #   web01:
+        #     ansible_host: 192.0.2.10
+        #   monitoring01:
+        #     ansible_host: 192.0.2.20

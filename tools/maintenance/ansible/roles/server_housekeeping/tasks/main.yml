@@ -1,0 +1,72 @@
+---
+- name: Require a Debian-family host with APT
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.os_family == 'Debian'
+      - ansible_facts.pkg_mgr == 'apt'
+    fail_msg: This housekeeping role supports Debian-family hosts managed by APT only.
+
+- name: Remove automatically installed packages no longer required
+  ansible.builtin.apt:
+    autoremove: true
+    purge: "{{ housekeeping_apt_purge | bool }}"
+  when: housekeeping_apt_autoremove | bool
+
+- name: Remove obsolete downloaded package archives
+  ansible.builtin.apt:
+    autoclean: true
+  when: housekeeping_apt_autoclean | bool
+
+- name: Check whether Docker daemon is available
+  ansible.builtin.command:
+    argv:
+      - docker
+      - info
+  register: housekeeping_docker_version
+  changed_when: false
+  failed_when: false
+  when: housekeeping_docker_enabled | bool
+
+- name: Preview Docker cleanup scope in check mode
+  ansible.builtin.debug:
+    msg: >-
+      Docker cleanup would prune images unused by any container and builder cache
+      older than {{ housekeeping_docker_image_until }} / {{ housekeeping_docker_build_cache_until }}.
+      Containers and volumes are never pruned.
+  when:
+    - housekeeping_docker_enabled | bool
+    - housekeeping_docker_version.rc | default(1) == 0
+    - ansible_check_mode
+
+- name: Prune old Docker images unused by all containers
+  ansible.builtin.command:
+    argv:
+      - docker
+      - image
+      - prune
+      - --all
+      - --force
+      - --filter
+      - "until={{ housekeeping_docker_image_until }}"
+  register: housekeeping_docker_image_prune
+  changed_when: "'Total reclaimed space: 0B' not in housekeeping_docker_image_prune.stdout"
+  when:
+    - housekeeping_docker_enabled | bool
+    - housekeeping_docker_version.rc | default(1) == 0
+    - not ansible_check_mode
+
+- name: Prune old Docker build cache
+  ansible.builtin.command:
+    argv:
+      - docker
+      - builder
+      - prune
+      - --force
+      - --filter
+      - "until={{ housekeeping_docker_build_cache_until }}"
+  register: housekeeping_docker_builder_prune
+  changed_when: "'Total reclaimed space: 0B' not in housekeeping_docker_builder_prune.stdout"
+  when:
+    - housekeeping_docker_enabled | bool
+    - housekeeping_docker_version.rc | default(1) == 0
+    - not ansible_check_mode

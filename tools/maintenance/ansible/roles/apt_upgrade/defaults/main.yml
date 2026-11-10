@@ -1,0 +1,5 @@
+---
+apt_upgrade_cache_valid_time: 3600
+apt_upgrade_autoremove: false
+apt_upgrade_autoclean: false
+apt_upgrade_dist: false

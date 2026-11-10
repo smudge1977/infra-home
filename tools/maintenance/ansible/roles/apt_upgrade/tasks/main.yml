@@ -1,0 +1,27 @@
+---
+- name: Require a Debian-family host with APT
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.os_family == 'Debian'
+      - ansible_facts.pkg_mgr == 'apt'
+    fail_msg: This role supports Debian-family hosts managed by APT only.
+
+- name: Refresh APT package metadata
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: "{{ apt_upgrade_cache_valid_time }}"
+
+- name: Upgrade installed packages
+  ansible.builtin.apt:
+    upgrade: "{{ 'dist' if apt_upgrade_dist else 'yes' }}"
+    dpkg_options: force-confdef,force-confold
+
+- name: Remove unused dependency packages when explicitly enabled
+  ansible.builtin.apt:
+    autoremove: true
+  when: apt_upgrade_autoremove | bool
+
+- name: Clean downloaded package archives when explicitly enabled
+  ansible.builtin.apt:
+    autoclean: true
+  when: apt_upgrade_autoclean | bool
