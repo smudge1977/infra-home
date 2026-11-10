@@ -1,0 +1,66 @@
+zabbix_export:
+  version: '6.0'
+  date: '2026-10-30T00:00:00Z'
+  groups:
+    - uuid: 2e49f1622d40487aa93bfc078eb7fbb5
+      name: Templates/Applications
+  templates:
+    - uuid: 7ce46fbef9ee4b72ad29b42a89c83d56
+      template: Linux fail2ban by Zabbix agent 2
+      name: Linux fail2ban by Zabbix agent 2
+      description: |
+        Monitor the fail2ban systemd service on Linux using passive Zabbix agent 2 checks.
+        Requires systemd and the fail2ban.service unit. Does not install or restart fail2ban.
+        The original zabbix_agentd does not support systemd.unit.info.
+        A missing unit or unsupported item is detected by the no-data trigger.
+      groups:
+        - name: Templates/Applications
+      items:
+        - uuid: f51c746157c14aa396496795c94d5e0e
+          name: 'fail2ban: Service substate'
+          type: ZABBIX_PASSIVE
+          key: 'systemd.unit.info[fail2ban.service,SubState]'
+          delay: 1m
+          history: 7d
+          trends: '0'
+          value_type: CHAR
+          description: |
+            Expected value: running. Three consecutive non-running samples raise a problem.
+            A missing unit, unavailable agent, or unsupported item raises a separate no-data problem.
+          tags:
+            - tag: component
+              value: security
+            - tag: service
+              value: fail2ban
+          triggers:
+            - uuid: 04bbc2959b514b02b47cf59bdb2876e4
+              expression: 'count(/Linux fail2ban by Zabbix agent 2/systemd.unit.info[fail2ban.service,SubState],#3,"ne","running")=3'
+              name: 'fail2ban: Service is not running on {HOST.NAME}'
+              priority: HIGH
+              description: |
+                The fail2ban systemd substate was not running for three consecutive samples.
+                Check systemctl status fail2ban.service and the service journal.
+                Recovers automatically when the next running sample arrives.
+              tags:
+                - tag: scope
+                  value: availability
+                - tag: service
+                  value: fail2ban
+            - uuid: 606eb25489dc481eb06c065559f0ba1e
+              expression: 'nodata(/Linux fail2ban by Zabbix agent 2/systemd.unit.info[fail2ban.service,SubState],10m)=1'
+              name: 'fail2ban: Service monitoring unavailable on {HOST.NAME}'
+              priority: WARNING
+              description: |
+                No service substate has been received for ten minutes.
+                Check agent connectivity and item errors. Confirm agent 2, systemd access,
+                and the existence of fail2ban.service. No data does not prove the service stopped.
+              tags:
+                - tag: scope
+                  value: availability
+                - tag: service
+                  value: fail2ban
+      tags:
+        - tag: component
+          value: security
+        - tag: service
+          value: fail2ban
