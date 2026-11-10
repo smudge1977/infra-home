@@ -1,0 +1,90 @@
+---
+- name: Validate PHP-FPM slow-log role inputs
+  ansible.builtin.assert:
+    that:
+      - php_fpm_slowlog_version is match('^[0-9]+\.[0-9]+$')
+      - php_fpm_slowlog_pool is match('^[A-Za-z0-9_-]+$')
+      - php_fpm_slowlog_timeout is match('^[1-9][0-9]*(ms|s|m)$')
+      - php_fpm_slowlog_rotate_frequency in ['daily', 'weekly']
+      - php_fpm_slowlog_rotate_count | int >= 1
+    fail_msg: Invalid PHP-FPM slow-log role configuration.
+
+- name: Inspect PHP-FPM pool configuration
+  ansible.builtin.stat:
+    path: "{{ php_fpm_slowlog_pool_config }}"
+  register: php_fpm_slowlog_pool_config_stat
+
+- name: Require existing PHP-FPM pool configuration
+  ansible.builtin.assert:
+    that:
+      - php_fpm_slowlog_pool_config_stat.stat.exists
+      - php_fpm_slowlog_pool_config_stat.stat.isreg
+    fail_msg: "Expected PHP-FPM pool config not found: {{ php_fpm_slowlog_pool_config }}"
+
+- name: Ensure private PHP-FPM log directory exists
+  ansible.builtin.file:
+    path: "{{ php_fpm_slowlog_file | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0750'
+
+- name: Inspect PHP-FPM slow-log file
+  ansible.builtin.stat:
+    path: "{{ php_fpm_slowlog_file }}"
+  register: php_fpm_slowlog_file_stat
+
+- name: Create slow log if it does not already exist
+  ansible.builtin.file:
+    path: "{{ php_fpm_slowlog_file }}"
+    state: touch
+    owner: root
+    group: root
+    mode: '0600'
+  when: not php_fpm_slowlog_file_stat.stat.exists
+
+- name: Enforce restricted slow-log permissions
+  ansible.builtin.file:
+    path: "{{ php_fpm_slowlog_file }}"
+    state: file
+    owner: root
+    group: root
+    mode: '0600'
+  when: php_fpm_slowlog_file_stat.stat.exists
+
+- name: Configure PHP-FPM slow-log timeout in the selected pool
+  ansible.builtin.lineinfile:
+    path: "{{ php_fpm_slowlog_pool_config }}"
+    regexp: '^\s*request_slowlog_timeout\s*='
+    line: "request_slowlog_timeout = {{ php_fpm_slowlog_timeout }}"
+    insertafter: EOF
+    backup: true
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Validate and reload PHP-FPM
+
+- name: Configure PHP-FPM slow-log path in the selected pool
+  ansible.builtin.lineinfile:
+    path: "{{ php_fpm_slowlog_pool_config }}"
+    regexp: '^\s*slowlog\s*='
+    line: "slowlog = {{ php_fpm_slowlog_file }}"
+    insertafter: EOF
+    backup: true
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Validate and reload PHP-FPM
+
+- name: Install bounded slow-log rotation policy
+  ansible.builtin.template:
+    src: php-fpm-slowlog.logrotate.j2
+    dest: "/etc/logrotate.d/php{{ php_fpm_slowlog_version }}-fpm-slow"
+    owner: root
+    group: root
+    mode: '0644'
+    backup: true
+    validate: "logrotate --debug %s"
+
+- name: Apply validated PHP-FPM logging configuration
+  ansible.builtin.meta: flush_handlers

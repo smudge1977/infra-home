@@ -1,0 +1,50 @@
+---
+- name: Enable PHP-FPM slow-request diagnostics on the approved WordPress host
+  hosts: all
+  become: true
+  gather_facts: true
+  serial: 1
+
+  pre_tasks:
+    - name: Require the expected production host and supported OS
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.hostname == 'massage-brighton-02'
+          - ansible_facts.distribution == 'Ubuntu'
+          - ansible_facts.distribution_version is match('^22\.04(\.|$)')
+        fail_msg: This diagnostic play is scoped to massage-brighton-02 on Ubuntu 22.04.
+
+    - name: Verify PHP-FPM 8.3 is installed
+      ansible.builtin.command:
+        argv:
+          - php-fpm8.3
+          - -v
+      check_mode: false
+      changed_when: false
+
+    - name: Verify PHP-FPM supports graceful reload
+      ansible.builtin.command:
+        argv:
+          - systemctl
+          - show
+          - --property=CanReload
+          - --value
+          - php8.3-fpm.service
+      check_mode: false
+      register: wordpress_fpm_can_reload
+      changed_when: false
+
+    - name: Require graceful reload capability
+      ansible.builtin.assert:
+        that:
+          - wordpress_fpm_can_reload.stdout | trim == 'yes'
+        fail_msg: PHP-FPM does not advertise graceful reload; no config will be applied.
+
+  roles:
+    - role: php_fpm_slowlog
+      vars:
+        php_fpm_slowlog_version: '8.3'
+        php_fpm_slowlog_pool: www
+        php_fpm_slowlog_timeout: 5s
+        php_fpm_slowlog_rotate_frequency: daily
+        php_fpm_slowlog_rotate_count: 7

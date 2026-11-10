@@ -1,0 +1,15 @@
+{{ php_fpm_slowlog_file }} {
+        {{ php_fpm_slowlog_rotate_frequency }}
+        rotate {{ php_fpm_slowlog_rotate_count }}
+        missingok
+        notifempty
+        compress
+        delaycompress
+        create 0600 root root
+        sharedscripts
+        postrotate
+                if [ -x {{ php_fpm_slowlog_reopen_command }} ]; then
+                        {{ php_fpm_slowlog_reopen_command }}
+                fi
+        endscript
+}

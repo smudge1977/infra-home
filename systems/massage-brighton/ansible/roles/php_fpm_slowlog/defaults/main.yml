@@ -1,0 +1,9 @@
+---
+php_fpm_slowlog_version: '8.3'
+php_fpm_slowlog_pool: www
+php_fpm_slowlog_pool_config: "/etc/php/{{ php_fpm_slowlog_version }}/fpm/pool.d/{{ php_fpm_slowlog_pool }}.conf"
+php_fpm_slowlog_file: "/var/log/php{{ php_fpm_slowlog_version }}-fpm/{{ php_fpm_slowlog_pool }}-slow.log"
+php_fpm_slowlog_timeout: 5s
+php_fpm_slowlog_rotate_frequency: daily
+php_fpm_slowlog_rotate_count: 7
+php_fpm_slowlog_reopen_command: "/usr/lib/php/php{{ php_fpm_slowlog_version }}-fpm-reopenlogs"

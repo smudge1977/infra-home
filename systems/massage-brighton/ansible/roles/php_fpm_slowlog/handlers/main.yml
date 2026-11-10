@@ -1,0 +1,15 @@
+---
+- name: Validate PHP-FPM pool configuration before reload
+  ansible.builtin.command:
+    argv:
+      - "php-fpm{{ php_fpm_slowlog_version }}"
+      - -t
+  changed_when: false
+  listen: Validate and reload PHP-FPM
+  notify: Reload PHP-FPM gracefully
+
+- name: Reload PHP-FPM gracefully
+  ansible.builtin.service:
+    name: "php{{ php_fpm_slowlog_version }}-fpm"
+    state: reloaded
+  when: not ansible_check_mode
