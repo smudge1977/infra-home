@@ -1,0 +1,13 @@
+# Managed by Ansible: high-confidence WordPress scanner probes only.
+[{{ fail2ban_wp_probes_jail_name }}]
+enabled = true
+filter = {{ fail2ban_wp_probes_filter_name }}
+backend = auto
+logpath = {{ fail2ban_wp_probes_log_path }}
+maxretry = {{ fail2ban_wp_probes_maxretry }}
+findtime = {{ fail2ban_wp_probes_findtime }}
+bantime = {{ fail2ban_wp_probes_bantime }}
+port = http,https
+protocol = tcp
+banaction = iptables-multiport
+ignoreip = {{ fail2ban_wp_probes_ignoreip | join(' ') }}

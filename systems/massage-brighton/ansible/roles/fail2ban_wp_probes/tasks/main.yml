@@ -1,0 +1,112 @@
+---
+- name: Require existing Fail2ban service
+  ansible.builtin.service_facts:
+
+- name: Require Fail2ban to be active before adding the web jail
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.services['fail2ban.service'] is defined
+      - ansible_facts.services['fail2ban.service'].state == 'running'
+    fail_msg: Fail2ban must already be active; this role will not install or replace its service.
+
+- name: Confirm the existing SSH jail is preserved
+  ansible.builtin.command:
+    argv:
+      - fail2ban-client
+      - status
+  register: fail2ban_wp_probes_existing_status
+  changed_when: false
+  check_mode: false
+
+- name: Require the existing SSH jail
+  ansible.builtin.assert:
+    that:
+      - "'sshd' in fail2ban_wp_probes_existing_status.stdout"
+    fail_msg: Existing sshd jail was not found; refusing to change Fail2ban configuration.
+
+- name: Require the Nginx access log
+  ansible.builtin.stat:
+    path: "{{ fail2ban_wp_probes_log_path }}"
+  register: fail2ban_wp_probes_log_stat
+
+- name: Require readable Nginx access log file
+  ansible.builtin.assert:
+    that:
+      - fail2ban_wp_probes_log_stat.stat.exists
+      - fail2ban_wp_probes_log_stat.stat.isreg
+    fail_msg: "Expected Nginx access log not found: {{ fail2ban_wp_probes_log_path }}"
+
+- name: Install high-confidence probe filter with backup
+  ansible.builtin.copy:
+    src: "{{ fail2ban_wp_probes_filter_source }}"
+    dest: "{{ fail2ban_wp_probes_filter_path }}"
+    owner: root
+    group: root
+    mode: '0644'
+    backup: true
+  register: fail2ban_wp_probes_filter_copy
+
+- name: Install temporary web-only probe jail with backup
+  ansible.builtin.template:
+    src: jail.local.j2
+    dest: "{{ fail2ban_wp_probes_jail_path }}"
+    owner: root
+    group: root
+    mode: '0644'
+    backup: true
+  register: fail2ban_wp_probes_jail_copy
+
+- name: Validate Fail2ban configuration before reload
+  ansible.builtin.command:
+    argv:
+      - fail2ban-client
+      - -t
+  changed_when: false
+  check_mode: false
+  when:
+    - not ansible_check_mode
+    - fail2ban_wp_probes_filter_copy.changed or fail2ban_wp_probes_jail_copy.changed
+
+- name: Validate probe filter against current access log without printing matched lines
+  ansible.builtin.command:
+    argv:
+      - fail2ban-regex
+      - "{{ fail2ban_wp_probes_log_path }}"
+      - "{{ fail2ban_wp_probes_filter_path }}"
+  changed_when: false
+  check_mode: false
+  no_log: true
+  when:
+    - not ansible_check_mode
+    - fail2ban_wp_probes_filter_copy.changed or fail2ban_wp_probes_jail_copy.changed
+
+- name: Reload Fail2ban to apply the validated jail
+  ansible.builtin.command:
+    argv:
+      - fail2ban-client
+      - reload
+  changed_when: false
+  check_mode: false
+  when:
+    - not ansible_check_mode
+    - fail2ban_wp_probes_filter_copy.changed or fail2ban_wp_probes_jail_copy.changed
+
+- name: Verify the new web jail is active
+  ansible.builtin.command:
+    argv:
+      - fail2ban-client
+      - status
+      - "{{ fail2ban_wp_probes_jail_name }}"
+  register: fail2ban_wp_probes_status
+  changed_when: false
+  check_mode: false
+  no_log: true
+  when: not ansible_check_mode
+
+- name: Require the new web jail to be active
+  ansible.builtin.assert:
+    that:
+      - "'Jail list' not in fail2ban_wp_probes_status.stdout"
+      - fail2ban_wp_probes_status.rc == 0
+    fail_msg: Fail2ban did not report the new web jail as active.
+  when: not ansible_check_mode

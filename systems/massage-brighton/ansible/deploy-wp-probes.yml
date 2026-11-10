@@ -1,0 +1,19 @@
+---
+- name: Add temporary Fail2ban protection for high-confidence WordPress probes
+  hosts: all
+  become: true
+  gather_facts: true
+  serial: 1
+  any_errors_fatal: true
+
+  pre_tasks:
+    - name: Require the expected production host and supported OS
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.hostname == 'massage-brighton-02'
+          - ansible_facts.distribution == 'Ubuntu'
+          - ansible_facts.distribution_version is match('^22\.04(\.|$)')
+        fail_msg: This playbook is scoped to massage-brighton-02 on Ubuntu 22.04.
+
+  roles:
+    - role: fail2ban_wp_probes

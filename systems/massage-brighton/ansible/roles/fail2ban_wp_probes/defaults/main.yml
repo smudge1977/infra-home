@@ -1,0 +1,16 @@
+---
+fail2ban_wp_probes_filter_name: nginx-wp-probes
+fail2ban_wp_probes_jail_name: nginx-wp-probes
+fail2ban_wp_probes_filter_source: "{{ playbook_dir }}/../session_mgr/nginx-wp-probes.conf"
+fail2ban_wp_probes_filter_path: "/etc/fail2ban/filter.d/{{ fail2ban_wp_probes_filter_name }}.conf"
+fail2ban_wp_probes_jail_path: "/etc/fail2ban/jail.d/{{ fail2ban_wp_probes_jail_name }}.local"
+fail2ban_wp_probes_log_path: /var/log/nginx/access.log
+fail2ban_wp_probes_bantime: 1h
+fail2ban_wp_probes_findtime: 10m
+fail2ban_wp_probes_maxretry: 1
+fail2ban_wp_probes_ignoreip:
+  - 127.0.0.1/8
+  - ::1
+  - 35.153.189.217
+  - 193.9.255.220
+  - home.keithmarston.me.uk
