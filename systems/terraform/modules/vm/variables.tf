@@ -24,6 +24,17 @@ variable "bridge" {
   type        = string
 }
 
+variable "vlan_tag" {
+  description = "Optional VLAN tag for the VM NIC; null leaves it untagged."
+  type        = number
+  default     = null
+
+  validation {
+    condition     = var.vlan_tag == null ? true : var.vlan_tag >= 1 && var.vlan_tag <= 4094 && floor(var.vlan_tag) == var.vlan_tag
+    error_message = "The VLAN tag must be a whole number between 1 and 4094, or null."
+  }
+}
+
 variable "pool_id" {
   description = "Existing Proxmox resource pool to place the VM in; null for none. The pool is not created here."
   type        = string

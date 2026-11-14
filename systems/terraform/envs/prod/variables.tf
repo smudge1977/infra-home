@@ -75,6 +75,7 @@ variable "vms" {
     cores        = optional(number, 2)
     memory_mb    = optional(number, 2048)
     disk_size_gb = optional(number, 20)
+    vlan_tag     = optional(number)
     linked_clone = optional(bool, false)
     on_boot      = optional(bool, false)
   }))

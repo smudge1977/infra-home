@@ -27,6 +27,7 @@ module "vm" {
   cores          = each.value.cores
   memory_mb      = each.value.memory_mb
   disk_size_gb   = each.value.disk_size_gb
+  vlan_tag       = each.value.vlan_tag
   linked_clone   = each.value.linked_clone
   on_boot        = each.value.on_boot
   protect_vm     = var.protect_vm

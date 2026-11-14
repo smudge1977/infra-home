@@ -10,6 +10,9 @@ datastore_id     = "REPLACE_WITH_PROX04_DATASTORE"
 bridge           = "REPLACE_WITH_PROX04_BRIDGE"
 
 # Add VMs via `vms`; see variables.tf for the shape.
+# Planned engineering VM: use bridge = "vmbr0" above and vlan_tag = 1000 in
+# its vms entry. dc01 DHCP supplies its address and gateway (10.100.100.1/24);
+# arrange the fixed DHCP reservation separately. Do not assign an unverified VM ID.
 vms = {}
 
 # Set false and apply the protection-only update before an approved destroy.

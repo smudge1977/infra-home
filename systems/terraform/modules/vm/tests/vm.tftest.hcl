@@ -81,6 +81,29 @@ run "mandatory_tags_are_always_present" {
   }
 }
 
+run "vlan_tag_is_applied" {
+  command = plan
+
+  variables {
+    vlan_tag = 1000
+  }
+
+  assert {
+    condition     = proxmox_virtual_environment_vm.this.network_device[0].vlan_id == 1000
+    error_message = "The VM NIC must use the requested VLAN tag."
+  }
+}
+
+run "reject_invalid_vlan_tag" {
+  command = plan
+
+  variables {
+    vlan_tag = 4095
+  }
+
+  expect_failures = [var.vlan_tag]
+}
+
 run "reject_invalid_tag_label" {
   command = plan
 

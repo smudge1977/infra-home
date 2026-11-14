@@ -32,3 +32,19 @@ run "vm_in_prod_range" {
     error_message = "A VM inside 1000-1999 must plan."
   }
 }
+
+run "engineering_vlan_is_passed_to_module" {
+  command = plan
+
+  variables {
+    bridge = "vmbr0"
+    vms = {
+      engineering = { name = "engineering", system = "engineering", vm_id = 1001, vlan_tag = 1000 }
+    }
+  }
+
+  assert {
+    condition     = module.vm["engineering"].vm_id == 1001
+    error_message = "The engineering VM with a VLAN tag must plan in the production range."
+  }
+}
