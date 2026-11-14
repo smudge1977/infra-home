@@ -58,8 +58,11 @@ changes only when deployment and verification are confirmed.
 
 ## Design notes
 
+- [Figma + MCP UI workflow idea](ideas/figma-mcp-ui-workflow.md) — a visual-design-to-agent experiment, starting with Jane's heating page.
+- [Home infrastructure overview v2](docs/diagrams/HomeInfra-Overview-v2.drawio) — ownership and placement snapshot; planned work and incomplete inventory are explicitly marked. Diagram authoring guidance: [.github/skills/drawio-architecture/SKILL.md](.github/skills/drawio-architecture/SKILL.md).
 - [Home automation stack and migration](docs/design/home-automation-stack.md)
 - [Home Assistant configuration ownership and backups](docs/design/homeassistant.md)
+- [Local voice assistant and ESP room-display reuse](docs/design/local-voice-assistant.md) — unscheduled idea; Mac compute, Home Assistant truth/control, hardware compatibility to prove.
 - [Forgejo deployment](docs/design/forgejo.md)
 - [Excalidraw collaboration and persistent scene storage](docs/design/excalidraw.md)
 - [Monitoring appliance architecture](docs/design/monitoring-architecture.md)

@@ -1,8 +1,11 @@
-Design: Guarded Remote Execution Interface — POC
+# Design: Guarded Agent Access to Production Servers
 
-Status: Draft / Proof of Concept
- Scope: Linux hosts accessed from the systems repository development environment
- Primary use case: Allow a local coding agent to inspect and test against a remote host without checking out the systems repository on that host or granting the agent an unrestricted remote shell.
+Status: Revised design / existing remote-end lab POC only
+Updated: 2026-11-14
+Scope: Linux hosts, primarily Ubuntu including Ubuntu 18.04, accessed from an agent workspace on a machine that also acts as an Ansible controller.
+Primary use case: Allow a coding agent to inspect production without a general-purpose shell or administrative credentials, and develop proposed automation locally.
+
+**First coding pass: only the read-only `agent-gateway` and its tests. Ansible privilege delegation is stage two, not part of this POC.** This document specifies the target design; section 26 distinguishes the existing `host-exec-gateway` lab implementation from capabilities and isolation still to be built and verified.
 
 1. Summary
 
@@ -50,10 +53,10 @@ Local VS Code
 
 Typical interaction:
 
-./tools/host-exec status prod-sc01
+./tools/host-exec inventory prod-sc01
 ./tools/host-exec service-status prod-sc01 zabbix-agent
-./tools/host-exec logs prod-sc01 zabbix-agent --minutes 30
-./tools/host-exec sockets prod-sc01
+./tools/host-exec journal prod-sc01 zabbix-agent
+./tools/host-exec check prod-sc01 network
 
 
 The agent can therefore gather enough evidence to understand the target environment without receiving unrestricted SSH access.
@@ -67,9 +70,13 @@ Do not modify production.
 
 are useful agent guidance but are not considered a security control.
 
-Controls must exist independently of agent behaviour.
+Assume the agent may make mistakes, ignore instructions, construct unexpected commands, or attempt to use any credentials it can reach. Controls must exist independently of agent behaviour.
 
-The remote host is therefore the final enforcement point.
+The remote host enforces the restricted inspection capability; the controller host enforces separation from unrestricted administrative credentials. Both are security boundaries. A forced command on one key does not help if the agent can use a second unrestricted key.
+
+Keeping an admin key alongside a restricted key and instructing the agent to choose the latter is not isolation. The same applies if the admin key is unreadable but usable through `SSH_AUTH_SOCK`, another credential broker, or a privileged service.
+
+**A credential unavailable to the agent is a security control. A credential available to the agent with instructions not to use it is not.**
 
 3.2 No arbitrary remote shell
 
@@ -80,15 +87,13 @@ host-exec prod01 exec "arbitrary shell command"
 
 This would simply recreate unrestricted SSH through another interface.
 
-Instead, operations are exposed as defined verbs:
+Instead, operations are exposed as defined capabilities:
 
-status
-facts
+inventory
 service-status
-logs
-processes
-sockets
-read-config
+journal
+read-file
+check
 
 
 Each operation has known semantics and independently validated parameters.
@@ -114,7 +119,7 @@ Where temporary files are eventually required for testing, this will be an expli
 
 Access is constrained at multiple layers:
 
-Agent instructions
+Controller Unix identity / credential isolation
         │
         ▼
 Local execution interface
@@ -135,7 +140,7 @@ Remote command gateway
 Linux permissions
 
 
-Failure or bypass of one control should not immediately provide unrestricted production access.
+Agent instructions are guidance, not a layer of enforcement. Failure or bypass of the local CLI must not provide unrestricted production access.
 
 4. POC Scope
 
@@ -147,6 +152,7 @@ one production host once the controls are demonstrated;
 local CLI;
 SSH transport;
 dedicated SSH key;
+separate local agent and Ansible runner identities and credentials;
 dedicated remote account;
 forced-command SSH restriction;
 remote command allowlist;
@@ -166,6 +172,9 @@ service restart/reload;
 package management;
 automated production deployment;
 secret retrieval;
+arbitrary inventory, Ansible modules or playbooks;
+arbitrary file writes or agent-created script execution;
+SSH tunnelling, SSH agent forwarding, PTYs and SCP/SFTP;
 repository checkout on the host;
 long-running remote agents;
 centrally hosted API;
@@ -174,56 +183,62 @@ MCP.
 MCP is discussed as a potential future interface in the appendix.
 
 5. Architecture
-┌──────────────────────────────────────────────────────────┐
-│ Engineer workstation                                     │
-│                                                          │
-│ VS Code                                                  │
-│ ├── Agent                                                │
-│ └── systems repository                                   │
-│       │                                                  │
-│       ├── hosts/                                         │
-│       ├── scripts/                                       │
-│       └── tools/host-exec                                │
-│                 │                                        │
-└─────────────────┼────────────────────────────────────────┘
-                  │
-                  │ restricted SSH key
-                  │
-                  ▼
-┌──────────────────────────────────────────────────────────┐
-│ Target Linux host                                        │
-│                                                          │
-│ sshd                                                     │
-│   │                                                      │
-│   └── agent-inspect                                      │
-│          │                                               │
-│          │ forced command                                │
-│          ▼                                               │
-│   /usr/local/sbin/host-exec-gateway                      │
-│          │                                               │
-│          ├── validate operation                          │
-│          ├── validate parameters                         │
-│          ├── enforce limits                              │
-│          ├── audit/log                                   │
-│          │                                               │
-│          └── execute known diagnostic operation           │
-│                                                          │
-└──────────────────────────────────────────────────────────┘
 
+There are two distinct paths into production, not two keys available to one agent process:
 
-There are therefore two components:
+```text
+Controller workstation/server (part of the security boundary)
+================================================================
+Keith / administrator                    agent Unix account
+        | unrestricted administration           | coding agent + editable checkout
+        v                                       | restricted key B only
+ansible-runner                            | NO admin key / admin SSH agent
+        | privileged administrative identity    | NO sudo / container socket
+        | admin credential                      |
+        | approved inventory/playbooks          | optional host-exec CLI
+        | audit logging                         |
+        |                                       | restricted SSH key B
+        v                                       v
+Production Linux servers
+================================================================
+Normal administrative access          sshd -> agent-inspect
+                                                                                                                                                                                 | forced command
+                                                                                                                                                                                 v
+                                                                                                                                                        agent-gateway (unprivileged)
+                                                                                                                                                                                 | fixed capabilities
+                                                                                                                                                                                 + inventory
+                                                                                                                                                                                 + service-status / journal
+                                                                                                                                                                                 + read-file / check
+```
 
-Local
-tools/host-exec
+The agent inspection path is agent → restricted SSH → sshd forced command → gateway → allow-listed operation. The administrative path is approved automation → isolated ansible-runner → admin credential → production. The agent has no direct access to the latter.
 
+`tools/host-exec` remains the optional local client abstraction. The target remote command name is `/usr/local/sbin/agent-gateway`; the existing lab implementation is installed as `/usr/local/sbin/host-exec-gateway` (section 26). Names or aliases must never introduce a bypass.
 
-Provides the stable interface used by engineers and agents.
+5.1 Controller Unix identities and credential isolation
 
-Remote
-/usr/local/sbin/host-exec-gateway
+Initially use separate local identities: `keith`, `agent`, and `ansible-runner`. The actual coding process, terminal, extensions and subprocesses must run within the agent boundary, not as the administrator with an instruction to switch accounts.
 
+Example credential locations:
 
-Provides the security boundary and converts permitted requests into specific local diagnostic operations.
+```text
+/home/agent/.ssh/id_agent_restricted
+/var/lib/ansible-runner/.ssh/id_ansible_admin
+```
+
+The runner's home, credentials and any SSH-agent socket must be protected by ownership and permissions inaccessible to `agent`. Private keys stay outside Git. Separate Unix users are the initial boundary, not a claim of isolation from host root or a kernel compromise.
+
+The agent must not be able to:
+
+- Read or use the admin credential, including inherited file descriptors, forwarded agents or accessible credential brokers.
+- Access an administrative `SSH_AUTH_SOCK`; normally unset it. If needed, use an agent holding **only** the restricted identity, with no route to load an admin identity.
+- Sudo to root or `ansible-runner`, or ptrace/debug the runner or administrator processes.
+- Modify the runner, its dependencies, service units, privileged wrappers, approved automation or any parent directories controlling them.
+- Control the runner service or submit arbitrary jobs to another administrative interface.
+
+Do not grant the local agent or remote inspection account membership in `sudo`, `docker`, `lxd` or equivalent privileged groups. Access to `/var/run/docker.sock`, a rootful container API or an equivalent host-control socket is effectively host root and defeats private-key filesystem protection. Review ACLs, inherited groups, service sockets and existing privilege escalation policy, not just account creation defaults.
+
+The approved automation tree and controller credential boundary are administrator-owned. Editing the development repository must not change anything the privileged runner subsequently trusts.
 
 6. Local Execution Interface
 
@@ -236,20 +251,20 @@ Example:
 
 Example operations:
 
-./tools/host-exec facts prod-sc01
+./tools/host-exec inventory prod-sc01
 
 ./tools/host-exec service-status prod-sc01 zabbix-agent
 
-./tools/host-exec logs prod-sc01 zabbix-agent --minutes 30
+./tools/host-exec journal prod-sc01 zabbix-agent
 
-./tools/host-exec sockets prod-sc01
+./tools/host-exec check prod-sc01 network
 
 
 The local tool is responsible for:
 
 resolving the host from repository inventory;
 determining its environment;
-selecting the appropriate SSH identity;
+selecting the restricted SSH identity (not choosing between restricted and agent-accessible admin keys);
 constructing the remote request;
 assigning an operation ID;
 recording the request and response;
@@ -290,25 +305,31 @@ Agent inspection SSH key
 
 Compromise or misuse of the agent key therefore does not automatically inherit the engineer's normal privileges.
 
+This assertion is conditional on controller isolation in section 5.1: the engineer's key and agent socket are unavailable to the coding agent. On the target, authorized keys and their parent directories must be root-controlled so `agent-inspect` cannot add a second, unrestricted key. Disable other login mechanisms for this account and audit existing keys, groups, sudo rules and sshd policy.
+
 8. SSH Restriction
 
 The SSH public key on the target will be bound to the remote gateway using a forced command.
 
 Conceptually:
 
-restrict,command="/usr/local/sbin/host-exec-gateway" ssh-ed25519 ...
+restrict,command="/usr/local/sbin/agent-gateway" ssh-ed25519 ...
 
 
 The gateway receives the requested operation but the SSH client cannot choose the executable that runs.
 
-Interactive sessions, forwarding and other unnecessary SSH capabilities should be disabled.
+Interactive sessions, SSH agent forwarding, port forwarding, X11 forwarding, PTYs, user RC execution and SCP/SFTP must be unavailable. A request such as `ssh server bash` or `ssh server "sudo something"` still invokes the gateway and must be rejected.
+
+Use explicit supported restrictions for each installed OpenSSH version, especially Ubuntu 18.04 hosts; do not assume one version's `restrict` behaviour proves another's effective policy. Include `no-agent-forwarding`, `no-port-forwarding`, `no-X11-forwarding`, `no-pty` and `no-user-rc` where supported, and account-level sshd restrictions as appropriate. Verify effective configuration and attempts against the actual daemon, including forwarding-only connections without a remote command. If the required restrictions cannot be enforced, do not enable access. The forced command runs as `agent-inspect`, not root; root ownership does not imply privileged execution.
 
 The gateway itself must be:
 
-owned by root;
+owned by root (`root:root`, mode `0755`, no setuid or privileged file capabilities);
 not writable by agent-inspect;
 installed through normal configuration management;
 version controlled in the systems repository.
+
+Configuration and allow-lists, executable dependencies and parent directories must also be protected from the inspection account. The installed production artifact must not be a symlink into an agent-writable checkout.
 9. Remote Protocol
 
 The interface between the local wrapper and remote gateway should be deliberately simple.
@@ -336,7 +357,9 @@ or:
 sh -c "$SSH_ORIGINAL_COMMAND"
 
 
-Instead, requests map to known executable paths and predefined arguments.
+Never build a shell parser or accept shell syntax. `SSH_ORIGINAL_COMMAND` is untrusted input to a small, bounded request grammar, not a command to execute. Reject unknown options, extra tokens, command chaining, substitutions and malformed/oversized input. A tokenizer is not an authorization policy.
+
+Instead, requests map to known absolute executable paths and predefined argument arrays. Invoke them with `shell=False` (or equivalent), a fixed environment and working directory, closed unrelated file descriptors, no pager and no caller-controlled executable search path. Do not pass input to `bash -c`, `sh -c`, `eval` or equivalent. Validate each service, file and check independently; never allow argument/option injection or use a command-prefix test as authorization.
 
 Conceptually:
 
@@ -350,93 +373,41 @@ service-status
 
 The caller controls values, not command construction.
 
-10. Initial Operations
+10. Target Gateway Interface and Initial Operations
 
-The POC should start with the smallest useful command set.
+The desired interface is a capability contract, not a claim that the existing lab implementation already supports it:
 
-facts
+```text
+agent-gateway [OPTIONS] <command> [arguments]
 
-Return basic host information such as:
+Guarded interface for agent access to production systems.
+No interactive shell is provided. Default behaviour: READ ONLY.
 
-hostname;
-OS/version;
-kernel;
-uptime;
-current time;
-relevant application/package versions.
-service-status
-service-status <service>
+Commands:
+        inventory                  Basic host inventory.
+        service-status <service>   Status of an allow-listed systemd service.
+        journal <service>          Bounded journal for an allow-listed service.
+        read-file <path>           Read an explicitly allow-listed file.
+        check <name>               Run a fixed, allow-listed diagnostic.
+        validate-script            Reserved: validate/stage content; never execute it.
 
+Options:
+        -h, --help                 Show help.
+        --list                     List permitted operations/resources, not secrets.
+        --audit-id <id>            Associate with an incident/change/work item.
+```
 
-Services must be explicitly allowlisted.
+`validate-script` is a future non-executing capability and must be rejected as unavailable in the first coding pass; listing/help must clearly mark it as reserved. The first implementation scope is `inventory`, `service-status`, `journal`, `read-file` and `check`, plus discovery/help and audit correlation. Deny any operation that cannot safely be provided by the unprivileged account; do not add sudo to make a diagnostic work.
 
-Example:
+- `inventory`: bounded hostname, OS/version, kernel, uptime, time and approved package/version information. No general secret or environment dump.
+- `service-status <service>`: exact server-side service allow-list, initially candidates `zabbix-agent` and `zabbix-agent2`. No arbitrary units, patterns, paths, flags or mutations. Disable pagers.
+- `journal <service>`: exact service allow-list plus maximum lookback, lines/bytes and timeout. Privileged/global journal access can expose secrets: if narrow safe access cannot be provided, deny the operation rather than granting broad journal groups. Review output sensitivity, not only command semantics.
+- `read-file <path>`: exact reviewed file entries, ideally mapped to named/sanitised configuration views. Directory candidates such as `/etc/zabbix/` and `/etc/netplan/` are **not recursive grants**; individual files require review because they can contain credentials. `/etc/hosts` is another candidate. Deny `/etc/shadow`, `/root/.ssh/`, `/var/lib/ansible-runner/`, process environments and all other non-allow-listed paths.
+- `check <name>`: fixed executable/argument mappings for `disk-space`, `memory`, `load`, `failed-units`, `network` and `zabbix-agent`. Enable only those proved bounded and non-sensitive on the host. A check name never selects a caller-provided script or executable.
 
-zabbix-agent
-zabbix-agent2
+For `read-file`, reject traversal (`..`), option-like paths, symlink escapes, special files, devices and pseudo-files. Canonicalisation alone is insufficient: use race-resistant resolution/opening, verify the opened regular file and enforce size limits. Policy must account for bind mounts and mount changes; a permitted pathname must not silently expose a different filesystem object. Keep allowed parents and mount control outside agent authority; deny uncertain cases. Test the actual supported Ubuntu/kernel behaviour before choosing a file-opening mechanism.
 
-
-A caller cannot request:
-
-service-status ../../something
-
-
-or an arbitrary system unit unless permitted.
-
-logs
-logs <service> --minutes <n>
-
-
-Controls should include:
-
-allowlisted service;
-maximum lookback;
-maximum returned lines/bytes;
-timeout.
-
-This protects both availability and the agent context from accidentally retrieving enormous log sets.
-
-processes
-
-Returns a bounded process view suitable for diagnosing the target application.
-
-It must not return arbitrary process environment variables because these may contain credentials.
-
-sockets
-
-Returns listening and/or established network socket information.
-
-Potentially:
-
-sockets
-sockets --listening
-
-
-This provides useful host context without exposing general command execution.
-
-read-config
-
-This should be added cautiously.
-
-Rather than:
-
-read-file /anything/the/caller/wants
-
-
-prefer:
-
-read-config zabbix-agent
-
-
-with a server-side mapping:
-
-zabbix-agent
-    → /etc/zabbix/zabbix_agentd.conf
-
-
-This prevents the interface turning into arbitrary filesystem read access.
-
-Files likely to contain credentials should not be exposed through the POC.
+Do not expose arbitrary process command lines/environments through a diagnostic check. Bound network/socket output and avoid packet capture. Exact policy remains root-controlled on each target.
 
 11. Host Inventory
 
@@ -484,26 +455,40 @@ Local logging:
 
 Remote syslog:
 
-host-exec-gateway:
+agent-gateway:
 op=20261101T124500Z-6f27
 user=agent-inspect
+source=<trusted-SSH-connection>
 operation=service-status
+site=<configured-site>
+host=prod-sc01
 target=zabbix-agent
-result=0
+audit_id=CHG-12345
+mode=read-only
+gateway_version=<installed-version>
+automation_commit=not-applicable
+result=success
+exit_status=0
 
 
 The audit record should capture:
 
 timestamp;
 operation ID;
-source identity where available;
-host;
+requesting OS/authenticated identity and source (for SSH, trusted connection metadata);
+target site and resolved host(s);
 requested operation;
 non-sensitive parameters;
+audit/change/incident ID;
+check/apply mode (read-only for the inspection gateway);
+approved automation Git commit (not applicable for inspection; record gateway/policy version instead);
 result;
+exit status;
 execution duration.
 
-Secrets and complete command output should not automatically be sent to syslog.
+Log accepted, denied, failed and timed-out requests using structured, escaped records. Treat `--audit-id` as a bounded caller-supplied correlation label, not evidence of approval or authenticated identity. Resolve authorization and target identity independently of caller labels. Future runner jobs must record the immutable approved commit actually executed, not a commit claimed by the requester.
+
+Use syslog/journald with administrator-controlled retention and, where appropriate, remote forwarding. The agent must not be able to modify or delete the authoritative log. Local workspace evidence is not an authoritative audit trail. Secrets and complete command output should not automatically be sent to syslog; avoid logging raw hostile input or secret-bearing parameters.
 
 13. Evidence Capture
 
@@ -574,42 +559,13 @@ script --apply
 
 The presence of --apply does not mean that the POC execution interface will permit the agent to invoke it on a production host.
 
-15. Script Testing — POC Extension
+15. Script Validation — Deferred, Non-Executing Capability
 
-Once read-only inspection is working reliably, the next POC capability may allow testing a locally developed script against the real host.
+Develop and test scripts locally or in a separate lab sandbox. The read-only production gateway must not stage-and-execute agent-created scripts, even as the inspection account. An unprivileged arbitrary script is still arbitrary code and can read anything that account can read, bypass output policy, or attack local services.
 
-This should remain separate from general command execution.
+A future `validate-script` may accept bounded content into a dedicated non-executable staging area for non-executing validation only. It needs a separately reviewed transfer protocol (not SCP/SFTP), ownership/retention limits, safe validators, isolation and resource controls. Do not source, import, run or otherwise execute uploaded content, including through validation tools with plugins/hooks or unsafe configuration discovery. This is not part of the first implementation.
 
-Conceptually:
-
-./tools/host-exec stage prod-sc01 scripts/check-foo.sh
-
-
-The file would be transferred to a controlled location such as:
-
-/var/tmp/host-exec/<operation-id>/
-
-
-It would:
-
-run as the unprivileged inspection user;
-have an execution timeout;
-have resource limits;
-receive a controlled environment;
-not have sudo;
-not gain additional filesystem permissions;
-be removed after the operation.
-
-For production, an uploaded script should initially require explicit engineer approval before execution.
-
-An execution request should also reject known change modes such as:
-
---apply
-
-
-However, argument filtering alone must not be treated as sufficient containment: the script itself is untrusted executable code.
-
-The actual protection remains the restricted Linux account, filesystem permissions and execution sandbox.
+Human approval or rejecting `--apply` arguments does not turn arbitrary uploaded code into a safe production diagnostic. Any future execution capability requires a new threat model and explicit approval; it is not an extension implicitly granted by this design.
 
 16. Production Change Boundary
 
@@ -638,6 +594,57 @@ The boundary should be:
 Production application should use a separate identity/process.
 
 The inspection key should never become the deployment key merely for convenience.
+
+16.1 Stage two: approved Ansible operations
+
+The controller's unrestricted Ansible credential is a separate security problem, not an exception to the inspection restrictions. The future path is:
+
+```text
+agent -> narrow authenticated ansible-gateway
+                        -> isolated ansible-runner
+                        -> fixed approved playbook + approved inventory
+                        -> admin credential -> production
+```
+
+Do not expose a generic runner trigger in stage one. Stage two requires its own reviewed authentication, authorization, approval and audit boundary. A possible interface is:
+
+```text
+ansible-gateway [OPTIONS] <operation>
+
+Approved operation candidates:
+        site-health-check
+        collect-diagnostics
+        deploy-zabbix-agent
+        validate-inventory
+
+Options:
+        --site SITE
+        --limit HOSTS
+        --ticket ID
+        --check
+        --apply
+        -h, --help
+
+Default: no production changes; --apply is required for a change.
+```
+
+For example, `ansible-gateway --site erlangen --ticket CHG-12345 --check deploy-zabbix-agent` requests a check; the corresponding `--apply` request explicitly asks for a change. These are future interface examples, not executable facilities provided by the POC.
+
+Omitting a mode must be non-mutating; reject conflicting `--check`/`--apply`. An explicit `--apply` is necessary but **not sufficient**: the caller, operation, targets and approval must also be authorized. A ticket string is not approval. Ansible check mode is not a security sandbox: modules, plugins and tasks (including `check_mode: false`) may still execute code or change systems. Reviewed jobs must enforce non-mutating default/check behaviour; deny jobs that cannot meet that guarantee.
+
+The agent requests an operation, never a key or playbook pathname. For example, the administrator-controlled mapping may resolve `deploy-zabbix-agent` to `/srv/approved-automation/deploy-zabbix-agent.yml`. Reject arbitrary modules, ad-hoc `shell`/`command`, caller-supplied playbooks and inventory, extra Ansible arguments/variables, plugin paths and environment overrides. Validate `--site` and `--limit` against approved inventory and authorized host sets; do not treat a free-form Ansible host pattern as authorization. Record the resolved target set.
+
+16.2 Editable versus executable automation
+
+Keep the agent-editable checkout (for example `/home/agent/workspace/automation/`) separate from the runner's trusted content (`/srv/approved-automation/`). An administrator-controlled review/promotion step must select an immutable Git commit and install its approved artifact. The agent cannot approve/promote its own changes or write the trusted tree.
+
+Protect the **complete execution dependency tree**, not just the top-level playbook: inventory and dynamic inventory scripts, roles, collections, modules, plugins, templates, included files, Ansible configuration, Python environment, runner wrappers and service configuration. Use trusted configuration, executable paths, working directory and environment; never discover them in an agent-writable checkout or inherit untrusted `ANSIBLE_*`, Python or SSH settings. Dependencies must be pinned/reviewed so a fixed commit cannot load agent-modified code later.
+
+If the agent can edit an approved playbook or any code it loads and then trigger the runner, it effectively has administrative code execution. Filesystem ownership, explicit promotion and job authorization must enforce this boundary, not a convention that a directory is called “approved”.
+
+16.3 Longer-term runner isolation
+
+Same-host Unix identity separation is acceptable to prove the model only when its acceptance tests pass. For production customer OT environments, prefer AWX or a dedicated hardened runner on a separate security boundary. The agent receives a narrow authenticated API/job interface and permission for specific reviewed job templates, never their credentials or arbitrary template edits. This reduces the concentration of agent, development repository, Ansible and production credentials on one host; it does not remove job/dependency/approval validation requirements.
 
 17. Failure Behaviour
 
@@ -716,66 +723,44 @@ cat /etc/zabbix/zabbix_agentd.conf
 
 from the perspective of agent capability design.
 
-20. POC Validation
+20. Mandatory POC Security Acceptance Tests
 
-Before allowing the interface to access production, validate that:
+**Acceptance statement: compromise or misbehaviour of the coding agent does not automatically provide unrestricted production access.** These are release gates, not optional hardening. Test from the real agent identity/environment and separately from the remote inspection identity. Record expected denial and observed result on the actual supported hosts, including Ubuntu 18.04/OpenSSH versions in scope. Unit tests alone cannot prove OS, socket, mount or sshd policy.
 
-Authentication
-the dedicated key authenticates;
-unrelated keys cannot use the restricted account unexpectedly;
-the agent key does not provide normal engineering SSH.
-Shell escape
+Controller isolation:
 
-Attempt:
+- [ ] Agent cannot read/use the Ansible admin key or administrator credentials, including via alternate ACLs, inherited descriptors or credential services. Test access without copying secrets into evidence.
+- [ ] `SSH_AUTH_SOCK` is absent or exposes only the restricted identity; admin/forwarded sockets and their credentials are unreachable.
+- [ ] Agent cannot sudo to root, become `ansible-runner`, ptrace/debug privileged identities or control the runner service.
+- [ ] Agent cannot access Docker/LXD/rootful container sockets or equivalent privileged groups/APIs.
+- [ ] Agent cannot modify the gateway installer, privileged wrappers, runner code/configuration or trusted dependencies used by privileged execution.
+- [ ] Agent can edit development automation but cannot edit/promote approved playbooks, inventory or their dependency tree.
+- [ ] Arbitrary playbook paths, agent-created playbooks, arbitrary inventory, Ansible ad-hoc commands, modules and environment/extra-argument overrides cannot be executed with the admin identity. In stage one there is no agent-accessible privileged runner interface at all; ordinary local Ansible development without admin credentials is not prohibited.
 
-ssh agent-inspect@host
+Authentication and remote enforcement:
 
+- [ ] Dedicated restricted key authenticates only to the intended restricted accounts; unrelated keys and alternative authentication do not open them.
+- [ ] Bypassing the local wrapper still reaches the remote forced command and identical policy.
+- [ ] Interactive login, `bash`, `sudo`, arbitrary commands, SCP and SFTP fail; no unrestricted key can be added by `agent-inspect`.
+- [ ] PTYs, local/remote/dynamic port forwarding (including no-command forwarding), SSH agent forwarding, X11 forwarding and user RC execution are denied by actual sshd policy.
+- [ ] Remote account cannot sudo, join privileged groups, modify applications/gateway/allow-lists/dependencies or access protected secrets. Gateway and policy are root-owned and non-writable through their parent paths.
 
-and confirm no shell is provided.
+Capability validation and file containment:
 
-Attempt arbitrary commands and confirm they are rejected.
+- [ ] Allowed inventory, exact services, journal queries, files and checks succeed with bounded output and least privilege; unavailable capabilities fail closed.
+- [ ] Unknown operations/services/files/checks, extra tokens, options, malformed requests and oversized input are rejected.
+- [ ] Command separators, pipes, redirection, shell expansion, command substitution, newlines and option injection cannot cause unintended execution; subprocess calls use fixed argument arrays with no shell.
+- [ ] `read-file` cannot escape via `../`, symlinks, symlink-swap races, bind mounts or unexpected canonical paths; reject special/pseudo-files and files exceeding limits.
+- [ ] Sensitive Zabbix/Netplan settings, journals and diagnostic output are not accidentally exposed by broad directory/group permissions or process environment/command-line dumps.
+- [ ] `validate-script` is unavailable in stage one; uploaded scripts cannot execute or be passed to a privileged runner.
 
-SSH features
+Availability and audit:
 
-Confirm that unnecessary:
+- [ ] Timeouts, child cleanup, output/line/byte limits and journal lookback bounds behave predictably; repeated/concurrent requests are bounded or rate-limited to protect availability.
+- [ ] Accepted/denied/failed requests are attributable by trusted identity/source, operation, targets, correlation ID, mode, version/commit, result and exit status; hostile labels cannot forge records.
+- [ ] Agent cannot modify/delete authoritative audit records; retention is verified independently of workspace evidence.
 
-port forwarding;
-agent forwarding;
-X11 forwarding;
-PTY allocation
-
-are unavailable.
-
-Command validation
-
-Attempt:
-
-unsupported operations;
-unsupported services;
-malformed arguments;
-command separators;
-shell expansion;
-path traversal;
-oversized values.
-
-All must fail closed.
-
-Linux permissions
-
-Confirm agent-inspect cannot:
-
-modify application configuration;
-modify the gateway;
-obtain sudo;
-interfere with application processes;
-access protected secrets.
-Resource limits
-
-Confirm:
-
-long operations time out;
-excessive log requests are bounded;
-excessive output is truncated/rejected predictably.
+Stage two adds approval/promotion tampering, target-scope escape and check-mode non-mutation tests **before** enabling any Ansible job delegation. Until then, these tests must confirm the delegated write path is absent, not imply it has been built or approved.
 21. POC Success Criteria
 
 The POC is successful if an agent working in the local systems repository can investigate a real host sufficiently to support development of a diagnostic script while:
@@ -789,59 +774,29 @@ production-changing operations are not available;
 each operation is attributable through an operation ID;
 useful host evidence can be captured locally;
 failure of the local guard does not grant unrestricted production access.
-22. Implementation Phases
-Phase 1 — Lab
+The controller credential-isolation and all applicable acceptance tests in section 20 must also pass; a working forced command alone is not success.
+22. Implementation Stages
 
-Implement:
+Stage one — read-only `agent-gateway` and tests only:
 
-host-exec
-host-exec-gateway
-facts
-service-status
-logs
-processes
-sockets
+1. Establish and verify the controller identity/credential boundary; do not make admin credentials available while developing the POC.
+2. Build the small gateway contract (`inventory`, `service-status`, `journal`, exact `read-file`, named `check`) and unit tests. Deny features not safely available. Keep any local wrapper optional and non-authoritative; do not expand the first coding pass into a runner service.
+3. Use a non-production lab host to exercise the complete controller, SSH, filesystem, hostile-input, audit and availability acceptance tests. Verify Ubuntu 18.04 compatibility rather than assuming modern runtime/sshd/kernel features.
+4. Only after independent review and all applicable acceptance gates pass, use the normal approved change process to consider one production read-only pilot. The current lab deployment playbook remains lab-only; this design update does not authorize or enable a production deployment.
 
+Stage two — separately reviewed `ansible-gateway` privilege delegation:
 
-Test extensively against a lab host.
+Implement only fixed authorized jobs, approved inventory, immutable reviewed/promoted automation, isolated runner credentials, non-mutating default/check mode, explicit authorized `--apply`, and authoritative audit. Complete new privilege-boundary acceptance tests first. No arbitrary Ansible interface or shared admin key.
 
-Phase 2 — Production read-only POC
-
-Deploy the gateway through normal configuration management to one production host.
-
-Enable only:
-
-facts
-service-status
-logs
-processes
-sockets
-
-Validate audit logging and operational impact.
-
-Phase 3 — Configuration evidence
-
-Introduce carefully scoped:
-
-read-config
-
-
-with named configuration objects rather than arbitrary filesystem access.
-
-Phase 4 — Script validation
-
-Explore:
-
-stage
-validate
-test
-
-
-using an isolated temporary execution area and resource controls.
-
-Production modification remains outside the execution interface.
+Deferred independently: non-executing script validation/staging and MCP integration. Neither implies arbitrary production code execution. Consider AWX or a separate hardened runner before production customer OT use.
 
 23. Risks / Dependencies
+Controller credential bypass
+
+Risk: Agent uses the unrestricted admin key, SSH agent, root-equivalent socket or writable runner dependency and avoids the remote gateway entirely.
+
+Control: Separate Unix identities, inaccessible credentials/sockets, no privilege escalation, immutable trusted automation and controller acceptance tests. Move privileged execution to a separate host/service when the shared-host boundary is insufficient.
+
 Restricted account gains excessive read permissions
 
 Risk: Agent retrieves secrets or unrelated customer/system information.
@@ -864,7 +819,7 @@ Inspection interface gradually becomes deployment interface
 
 Risk: Convenience results in progressively adding restart/write/sudo capabilities.
 
-Control: Explicit architectural boundary between inspection/testing and production application.
+Control: Explicit architectural boundary between production inspection, local/lab testing and separately approved production application.
 
 Retrieved evidence enters Git
 
@@ -887,7 +842,7 @@ A future enhancement could expose the same logical operations through Model Cont
 
 The underlying execution and security model should remain unchanged.
 
-Today
+Initial target interface
 
 Agent
   │
@@ -898,7 +853,7 @@ host-exec CLI
 SSH
   │
   ▼
-host-exec-gateway
+agent-gateway
 
 
 Potential future
@@ -915,23 +870,21 @@ same execution policy
 SSH
   │
   ▼
-same host-exec-gateway
+same agent-gateway
 
 A.2 Potential MCP tools
 
 The existing execution verbs map naturally onto typed tools:
 
-host_facts(host)
+host_inventory(host)
 
 service_status(host, service)
 
-service_logs(host, service, minutes)
+service_journal(host, service)
 
-processes(host)
+read_file(host, approved_path)
 
-sockets(host)
-
-read_config(host, config)
+diagnostic_check(host, approved_check)
 
 
 This would give the agent structured operations without exposing arbitrary command execution.
@@ -953,6 +906,8 @@ remote gateway
 Linux permissions
 
 
+Controller credential isolation remains required outside this chain. MCP must not expose an admin credential, runner configuration, arbitrary job or approval bypass.
+
 No future MCP tool equivalent to:
 
 exec(host, arbitrary_command)
@@ -966,6 +921,8 @@ If MCP is adopted, its principal advantage is therefore better agent/tool integr
 
 Proceed with a CLI + restricted SSH + remote forced-command gateway as the first POC.
 
+Only the read-only gateway and its tests are in the first coding pass. The local agent cannot access the administrator/Ansible credential or any equivalent privilege. Future approved job delegation is a separate stage; `--apply` is required but never substitutes for authorization and review.
+
 The POC should prove the important part first:
 
 An agent with the full systems repository locally can obtain useful, real-world production context without either placing the repository on production or receiving a general-purpose production shell.
@@ -974,7 +931,9 @@ MCP remains a future interface option once the underlying execution contract and
 
 26. Remote-end deployment POC
 
-The first implementation is an Ansible deployment for a systemd Linux host using Python 3, `journalctl`, `ps`, and `ss`. It installs only the remote boundary; the local `host-exec` client, evidence capture, and operation-ID correlation are not implemented yet.
+**Legacy lab implementation, not the revised gateway contract. It does not satisfy stage-one acceptance. Do not deploy it to production or treat these installation steps as proof of controller credential isolation.**
+
+The existing implementation predates this revised design. It is an Ansible deployment for a systemd Linux host using Python 3, `journalctl`, `ps`, and `ss`. It installs only the remote boundary; the local `host-exec` client, evidence capture, and operation-ID correlation are not implemented yet.
 
 Files:
 
@@ -986,6 +945,8 @@ Files:
 The playbook creates a locked, unprivileged `agent-inspect` account with no supplementary groups or sudo configuration. Its sole authorized key is installed with a forced command and SSH forwarding/PTY/RC restrictions. The gateway independently accepts only `facts`, `service-status` and bounded `logs`, `processes`, and `sockets` requests. It uses fixed argument-vector subprocess calls (never a shell), caps request and response sizes, applies timeouts, and writes operation metadata to syslog. The service allowlist is intentionally small (`zabbix-agent` and `zabbix-agent2`) and is maintained in the gateway source.
 
 This is a lab POC, not production-ready hardening. It does not configure sshd globally, establish host-key trust, deploy the local client, or prove that the target's syslog is retained. Before production use, complete the validation checklist in section 20, review the target's existing SSH/account policy, and separately implement the local client and operation-ID protocol. Never point this POC at production.
+
+Revision gap: it does not establish or test the controller's `keith`/`agent`/`ansible-runner` isolation, and its `facts`/`logs`/`processes`/`sockets` vocabulary is legacy, not the target interface in section 10. The revised `inventory`/`journal`/`read-file`/`check`, discovery/help and audit-ID contract, file-containment tests and complete security acceptance suite remain implementation work. Ansible deployment here is administrator-operated installation tooling, **not** an agent-accessible `ansible-gateway`. No Ansible delegation, promotion workflow, script validation or production readiness is claimed by this document update.
 
 This requires Ansible on the controller. Install the required collection with `ansible-galaxy collection install -r requirements.yml`. To prepare the example inventory, set the lab host's real address and existing Ansible administrator account, then set `host_exec_authorized_key` to the dedicated inspection key's **public** key. Keep the matching private key outside the repository. From the `ansible` directory, check the plan and syntax before applying:
 

@@ -1,6 +1,6 @@
 <mxfile host="Electron">
   <diagram name="Page-1" id="xE4_LzLDxT0ChD3Z-qXb">
-    <mxGraphModel dx="4238" dy="2963" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="4539" dy="3172" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -73,7 +73,7 @@
         <mxCell id="qpZ3Wb6ZU6R09h91shVr-31" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="No Postgres yet for HA for Grafana integrations etc&lt;div&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
           <mxGeometry height="70" width="170" x="-525" y="524.62" as="geometry" />
         </mxCell>
-        <mxCell id="qpZ3Wb6ZU6R09h91shVr-32" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="Zabbix&lt;div&gt;v6.x not 7 or 8&lt;/div&gt;" vertex="1">
+        <mxCell id="qpZ3Wb6ZU6R09h91shVr-32" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="&lt;div&gt;DC01-ZABBIX6.0&lt;/div&gt;&lt;div&gt;10.100.100.8&lt;/div&gt;Zabbix&lt;div&gt;v6.x not 7 or 8&lt;/div&gt;" vertex="1">
           <mxGeometry height="60" width="120" x="-645" y="360" as="geometry" />
         </mxCell>
         <mxCell id="qpZ3Wb6ZU6R09h91shVr-33" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;" value="&lt;div&gt;MONITORING&lt;/div&gt;Wazuh&lt;div&gt;Alerta&lt;/div&gt;&lt;div&gt;New Zabbix?&lt;/div&gt;" vertex="1">
@@ -119,6 +119,15 @@
         </mxCell>
         <mxCell id="hhkvdEIbvInvgBU6_yjq-4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;" value="docker stacks&lt;div&gt;Misc untils and stacks - various release of little apps&lt;/div&gt;&lt;div&gt;like Exciela draw&lt;/div&gt;&lt;div&gt;Change calander from frogeo data&lt;/div&gt;" vertex="1">
           <mxGeometry height="80" width="370" x="910" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="MQ4F-yBxAW3YuEcnRMk2-1" connectable="0" parent="1" style="group;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="" vertex="1">
+          <mxGeometry height="510" width="1040" x="-1450" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="MQ4F-yBxAW3YuEcnRMk2-2" parent="MQ4F-yBxAW3YuEcnRMk2-1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;align=left;verticalAlign=top;fillColor=#d5e8d4;strokeColor=#82b366;" value="dc01-docker01" vertex="1">
+          <mxGeometry height="510" width="1040" as="geometry" />
+        </mxCell>
+        <mxCell id="MQ4F-yBxAW3YuEcnRMk2-3" parent="MQ4F-yBxAW3YuEcnRMk2-1" style="rounded=0;whiteSpace=wrap;html=1;align=left;" value="docker ps --format &#39;table {{.Names}}\t{{.Image}}\t{{.Status}}&#39;&lt;div&gt;NAMES                 IMAGE                        STATUS&lt;/div&gt;&lt;div&gt;prometheus            prom/prometheus:v3.5.0       Up 2 weeks&lt;/div&gt;&lt;div&gt;promtail-promtail-1   grafana/promtail:3.5.3       Up 2 weeks&lt;/div&gt;&lt;div&gt;grafana               grafana/grafana-oss:12.1.0   Up 2 weeks&lt;/div&gt;&lt;div&gt;loki                  grafana/loki:3.5.3           Up 2 weeks&lt;/div&gt;" vertex="1">
+          <mxGeometry height="117.6923076923077" width="316.72727272727275" x="18.90909090909091" y="43.15384615384614" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

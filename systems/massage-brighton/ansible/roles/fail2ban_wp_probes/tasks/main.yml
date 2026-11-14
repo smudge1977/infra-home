@@ -73,9 +73,21 @@
       - fail2ban-regex
       - "{{ fail2ban_wp_probes_log_path }}"
       - "{{ fail2ban_wp_probes_filter_path }}"
+  register: fail2ban_wp_probes_filter_test
   changed_when: false
   check_mode: false
   no_log: true
+  when:
+    - not ansible_check_mode
+    - fail2ban_wp_probes_filter_copy.changed or fail2ban_wp_probes_jail_copy.changed
+
+- name: Require probe filter to match current access-log traffic
+  ansible.builtin.assert:
+    that:
+      - fail2ban_wp_probes_filter_test.stdout is search('Failregex:\s+[1-9][0-9]* total')
+    fail_msg: >-
+      The filter parsed but matched zero lines in the current Nginx access log;
+      refusing to reload or enable the jail.
   when:
     - not ansible_check_mode
     - fail2ban_wp_probes_filter_copy.changed or fail2ban_wp_probes_jail_copy.changed

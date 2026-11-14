@@ -50,3 +50,6 @@ htmlcov/
 *.tfplan
 *.tfvars
 !*.tfvars.example
+
+# Local AWS IAM credential output
+.s3-user

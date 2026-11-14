@@ -11,6 +11,30 @@ additional monitoring plugs are planned in
 than left as unscheduled backlog work. Heating/controller-specific use of energy
 data remains separate from this infrastructure dashboard.
 
+## Local voice assistant and ESP room displays
+
+- [ ] Explore a [local voice assistant](design/local-voice-assistant.md) with the
+  Mac providing whisper.cpp speech recognition, Ollama/Llama and local TTS, and
+  Home Assistant providing authoritative house state and controlled actions.
+  Reuse one or more existing ESP room displays with microphone/speaker hardware
+  where supported; first verify the actual boards, audio interfaces, memory and
+  local wake-word compatibility without disrupting room controls.
+- [ ] Prove the first milestone: **“Okay Nabu” detected locally → speech sent to
+  Mac Whisper → transcription shown on the ESP display**. Add language responses,
+  read-only house queries, TTS, house-aware reasoning, policy-gated actions and a
+  custom wake word only in the staged order described in the design.
+
+Idea only: no sprint or Forgejo issue assigned, no firmware or service deployed.
+HeatMesh retains ownership of display firmware and heating behaviour; infra-home
+owns supporting services, networking, security and recovery.
+
+## Samba setup note
+
+The repository does not yet document the Samba setup. Record the actual host and
+share path, intended clients, account/group permissions, network exposure, and
+backup/recovery approach once those details are confirmed. Do not infer a live
+deployment or configuration from this note.
+
 ## Excalidraw collaboration service
 
 - [ ] Commission the [Excalidraw project](../systems/excalidraw/README.md): choose

@@ -48,19 +48,19 @@ verify the existing state and its ownership before migrating it to a new key.
 The [production configuration](../../systems/terraform/envs/prod/versions.tf)
 uses the S3 key `osmond/engineering/terraform.tfstate`, with the local AWS CLI
 profile `infra-prod-state` and native S3 lockfiles. Terraform 1.10 or later is
-required for S3 lockfiles. Backend initialization has succeeded; production state
-is currently empty. The bucket owner has confirmed versioning and default
-encryption as noted above. Use `terraform init -migrate-state` only after
-confirming that any local production state is understood and backed up.
+required for S3 lockfiles. Backend initialization has succeeded, and production
+state now manages the engineering VM at that key. The bucket owner has confirmed
+versioning and default encryption as noted above. Use `terraform init -migrate-state`
+only after confirming that any local production state is understood and backed up.
 
-## Planned engineering host network
+## Engineering host network
 
-The production engineering VM is planned on `vmbr0`, tagged VLAN `1000`, on the
-`dc01` network. Its gateway is `10.100.100.1` on the `10.100.100.0/24` subnet.
-The VM uses DHCP; the DHCP server will provide a fixed address via a reservation,
-which must be configured separately. Confirm VLAN-aware bridge and upstream trunk
-configuration, and choose a stable MAC address before making that reservation.
-These are intended settings, not evidence that the VM or reservation exists.
+The production engineering VM runs on `prox04` using `vmbr0`, tagged VLAN `1000`,
+on the `dc01` network. The VM uses DHCP on `10.100.100.0/24`; the DHCP server
+gateway is `10.100.100.1`. The operator confirmed on 2026-11-14 that a DHCP
+reservation is in place for `10.100.100.11`. The address is reserved, rather
+than statically configured in the guest. Terraform refreshed the VM's current
+lease as `10.100.100.11` on 2026-11-14.
 
 
 
