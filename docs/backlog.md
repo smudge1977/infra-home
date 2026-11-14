@@ -40,6 +40,14 @@ data remains separate from this infrastructure dashboard.
 
 Design only: no sprint or Forgejo issue assigned, no guest or integration deployed.
 
+## Dynamic container tracking and observability
+
+- [ ] Implement the [dynamic container tracking and observability design](design/dynamic-container-observability.md) — [Forgejo issue #29](https://git.keithmarston.me.uk/Home/infra-home/issues/29): classify Docker hosts in NetBox, verify the `docker_host` Ansible dynamic-inventory group, and deploy version-compatible Zabbix Agent 2 discovery and Wazuh Docker lifecycle auditing. Set bounded lost-resource retention, validate the `monitoring=false` opt-out where supported, and route/deduplicate actionable events in Alerta without suppressing production/security signals. Review Docker socket privilege, event/resource retention and rollback before rollout.
+
+Design only: no host integration or agent/listener deployment is claimed. Track as
+unscheduled backlog work; coordinate implementation with monitoring appliance
+commissioning and alert aggregation.
+
 ## Backup and recovery
 
 - [ ] **Evaluate layered backup/restore strategy: Borg, restic, PBS and portable

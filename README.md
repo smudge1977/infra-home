@@ -63,5 +63,6 @@ changes only when deployment and verification are confirmed.
 - [Forgejo deployment](docs/design/forgejo.md)
 - [Excalidraw collaboration and persistent scene storage](docs/design/excalidraw.md)
 - [Monitoring appliance architecture](docs/design/monitoring-architecture.md)
+- [Dynamic container tracking and observability](docs/design/dynamic-container-observability.md)
 - [Monitoring deployment, shared PostgreSQL and recovery](docs/design/monitoring-deployment.md)
 - [Monitoring alert aggregation and Teams notification](docs/design/monitoring-alerting.md)
